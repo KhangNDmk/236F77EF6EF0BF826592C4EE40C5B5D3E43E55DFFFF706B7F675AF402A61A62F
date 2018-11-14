@@ -1,0 +1,7 @@
+MPU6050.c:11:6:i2cWrite	40	static
+MPU6050.c:24:6:i2cRead	40	static
+MPU6050.c:35:6:MPU6050_Init	48	static
+MPU6050.c:94:6:MPU6050_ReadAcc	24	static
+MPU6050.c:102:6:MPU6050_ReadGyro	24	static
+MPU6050.c:111:7:MPU6050_ReadAll	40	static
+MPU6050.c:131:6:calib	32	static

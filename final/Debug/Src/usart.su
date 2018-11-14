@@ -1,0 +1,3 @@
+usart.c:52:6:MX_USART3_Init	8	static
+usart.c:71:6:HAL_USART_MspInit	48	static
+usart.c:111:6:HAL_USART_MspDeInit	8	static
