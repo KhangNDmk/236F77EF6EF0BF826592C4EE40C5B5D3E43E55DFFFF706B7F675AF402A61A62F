@@ -7,6 +7,10 @@
 
 #ifndef SVM_H
 #define SVM_H
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 
 #include "BLDC.h"
 /**/
@@ -23,4 +27,9 @@ void bgc_bldchdl(volatile BLDC *bldc0, float u0);
 
 /**/
 void bgc_SVPWM(volatile BLDC *bldc0, int CTR);
+
+/**/
+#ifdef __cplusplus
+}
+#endif
 #endif

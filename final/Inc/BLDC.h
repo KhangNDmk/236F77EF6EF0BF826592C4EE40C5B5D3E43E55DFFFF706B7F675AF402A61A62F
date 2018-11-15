@@ -1,12 +1,16 @@
 /*  * BLDC lib for BGC
     * Author: KhangND
     * V1: Create BLDC and PID struct
-    
+    * v2: Create
     * Created 30/10/2018
 */
 
 #ifndef BLDC_H
 #define BLDC_H
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 
 /**/
 #define VDC             12      /* Dien ap nguon*/
@@ -14,6 +18,16 @@
 #define PR10            99     /* Counter cua Timer tao PWM */
 #define BLDC_CKTM       0.01       /* chu ki interrupt dieu khien BLDC */
 #define DELTA_ANGLE     0.01       /* == BLDC_CKTM * BLDC_POLE  */
+/**/
+
+
+/**/
+//bldc1: TIM1, Enable: PD0, PD2, PD4
+//bldc2: TIM3, Enable: PD1, PD3, PD5
+//bldc3: TIM4, Enable: PA8, PA10, PA14
+
+/**/
+
 
 /* BLDC struct              */
 /* State[0] in(k)           */
@@ -28,7 +42,7 @@ typedef struct
     float A1;
     float A2;
     float state[3];
-} pid_obj;
+} PID_OBJ;
 /**/
 
 /**/
@@ -47,6 +61,9 @@ typedef struct
     float dphi;
     float Va;
     float Vb;
+    unsigned int CTR;
+    unsigned int ID;
+    unsigned int pole;
     unsigned int duty1;
     unsigned int duty2;
     unsigned int duty3;
@@ -54,16 +71,26 @@ typedef struct
 /**/
 
 /**/
-void pid_init(pid_obj *pid , float Kp, float Ki, float Kd);
+void pid_init(PID_OBJ *pid , float Kp, float Ki, float Kd);
 
 /**/
-float pid_controller(pid_obj* S , float in);
+float pid_controller(PID_OBJ* S , float in);
 
 /**/
 void test_bldc(void);
 /**/
-void bldc_init(volatile BLDC *bldc0, float dphi0 , float phi0 ,float Vdc0 , float Voffset0, float K0);
-/**/
-void bldc1_alaign();
 
+/**/
+
+/**/
+volatile BLDC bldc1;
+volatile BLDC bldc2;
+volatile BLDC bldc3;
+extern volatile BLDC bldc1;
+extern volatile BLDC bldc2;
+extern volatile BLDC bldc3;
+
+#ifdef __cplusplus
+}
+#endif
 #endif

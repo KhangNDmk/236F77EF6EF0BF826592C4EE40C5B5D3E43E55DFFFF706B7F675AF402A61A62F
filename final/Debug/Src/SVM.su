@@ -1,5 +1,5 @@
-SVM.c:25:7:bgc_sin	0	static
-SVM.c:34:7:bgc_cos	0	static
-SVM.c:43:6:bgc_bldchdl	16	static
-SVM.c:63:6:bgc_SVPWM	56	static
-SVM.c:127:6:svmtest	0	static
+SVM.c:24:7:bgc_sin	0	static
+SVM.c:33:7:bgc_cos	0	static
+SVM.c:42:6:bgc_bldchdl	16	static
+SVM.c:62:6:bgc_SVPWM	56	static
+SVM.c:126:6:svmtest	0	static

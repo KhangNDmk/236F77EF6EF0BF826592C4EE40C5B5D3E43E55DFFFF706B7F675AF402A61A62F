@@ -59,7 +59,7 @@
 /* Private variables ---------------------------------------------------------*/
 MPU6050 mpu;
 
-    volatile BLDC bldc1;
+    //volatile BLDC bldc1;
     int dutya, dutyb, dutyc;
     int deg0=0;
     float out, out2;
@@ -81,22 +81,21 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
     {
         //out2 =out;
         //out=0;
+        MPU6050_ReadAll(&hi2c1,&mpu);
 
-        bgc_bldchdl(&bldc1, out);
-        bgc_SVPWM(&bldc1 , 200);
+        mpu.GyroY -= 2;
+        out= mpu.GyroY/90 ;
+
+        //bgc_bldchdl(&bldc1, out);
+        //bgc_SVPWM(&bldc1 , 200);
 
         deg0++;
         if (deg0 == 1000)
         {
             deg0 =0;
-            if(out<10)
-            {
-                out=out+1;
-            }
-
         }
-
         dutya= bldc1.duty1;
+        dutya= bldc2.duty1;
         dutyb= bldc1.duty2;
         dutyc= bldc1.duty3;
     __HAL_TIM_SET_COMPARE(&htim3, TIM_CHANNEL_1, dutya);
@@ -104,8 +103,8 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
     __HAL_TIM_SET_COMPARE(&htim3, TIM_CHANNEL_3, dutyc);
         /**/
 
-        MPU6050_ReadAll(&hi2c1,&mpu);
-        MadgwickAHRSupdateIMU(mpu.GyroX,mpu.GyroY,mpu.GyroZ,mpu.AccX,mpu.AccY,mpu.AccZ);
+        //MPU6050_ReadAll(&hi2c1,&mpu);
+        //MadgwickAHRSupdateIMU(mpu.GyroX,mpu.GyroY,mpu.GyroZ,mpu.AccX,mpu.AccY,mpu.AccZ);
         //qua2Euler();
     }
 }
@@ -152,12 +151,13 @@ int main(void)
   MX_ADC2_Init();
   /* USER CODE BEGIN 2 */
 
-  bldc_init(&bldc1, 0.36 ,20 ,VDC, 3 , 0.1);     //0.2857 ...0.32..0.07
+  //bldc_init(&bldc1, 0.36 ,20 ,VDC, 3 , 0.1);     //0.2857 ...0.32..0.07
+  bldc1.duty1 =45;
   out=0;
 
-//  HAL_GPIO_WritePin(GPIOD, GPIO_PIN_1, GPIO_PIN_SET);
-//  HAL_GPIO_WritePin(GPIOD, GPIO_PIN_3, GPIO_PIN_SET);
-//  HAL_GPIO_WritePin(GPIOD, GPIO_PIN_5, GPIO_PIN_SET);
+  HAL_GPIO_WritePin(GPIOD, GPIO_PIN_1, GPIO_PIN_SET);
+  HAL_GPIO_WritePin(GPIOD, GPIO_PIN_3, GPIO_PIN_SET);
+  HAL_GPIO_WritePin(GPIOD, GPIO_PIN_5, GPIO_PIN_SET);
 
   HAL_TIM_PWM_Start(&htim3, TIM_CHANNEL_1);
   HAL_TIM_PWM_Start(&htim3, TIM_CHANNEL_2);
@@ -172,7 +172,7 @@ int main(void)
 
   /**/
   HAL_TIM_Base_Start_IT(&htim10);
-  MPU6050_Init(&hi2c1,&mpu,Acc_8G,Gyro_2000s);
+  //MPU6050_Init(&hi2c1,&mpu,Acc_8G,Gyro_2000s);
   /* USER CODE END 2 */
 
   /* Infinite loop */
