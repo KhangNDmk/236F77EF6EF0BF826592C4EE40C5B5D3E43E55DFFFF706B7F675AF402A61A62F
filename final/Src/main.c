@@ -81,7 +81,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
     {
         //out2 =out;
         //out=0;
-        MPU6050_ReadAll(&hi2c1,&mpu);
+        //MPU6050_ReadAll(&hi2c1,&mpu);
 
         mpu.GyroY -= 2;
         out= mpu.GyroY/90 ;

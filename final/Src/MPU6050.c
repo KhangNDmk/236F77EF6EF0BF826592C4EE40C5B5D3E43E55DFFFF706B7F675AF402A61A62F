@@ -2,8 +2,9 @@
 #include "stm32f4xx_hal_i2c.h"
 #include<string.h>
 volatile float Gyro_offset[3]={0,0,0};
-int iscalibrated=0; // check whether imu is calibrated or not
-int calib_count;
+volatile float Gyro_offset1[3]={0,0,0};
+int iscalibrated = 0; // check whether imu is calibrated or not
+
 int flag = 1;
 uint8_t buffer[2];// buffer to transfer to i2c
 HAL_StatusTypeDef status;// flag to check transaction complete
@@ -95,48 +96,64 @@ void MPU6050_ReadAcc(I2C_HandleTypeDef *hi2c,MPU6050 *mpu)
 {
 	uint8_t data[6];
 	i2cRead(hi2c,MPU6050_ADDRESS,MPU6050_ACCEL_XOUT_H, data, 6);
-	mpu->AccX = (int16_t)(data[0] << 8 | data[1]);	
-	mpu->AccY = (int16_t)(data[2] << 8 | data[3]);
-	mpu->AccZ = (int16_t)(data[4] << 8 | data[5]);
+	mpu->AccX_raw = (int32_t)(data[0] << 8 | data[1]);	
+	mpu->AccY_raw = (int32_t)(data[2] << 8 | data[3]);
+	mpu->AccZ_raw = (int32_t)(data[4] << 8 | data[5]);
 }
 void MPU6050_ReadGyro(I2C_HandleTypeDef *hi2c,MPU6050 *mpu)
 {
 	uint8_t data[6];
 	i2cRead(hi2c,MPU6050_ADDRESS,MPU6050_GYRO_XOUT_H, data, 6);
-	mpu->GyroX = (int16_t)(data[0] << 8 | data[1]);	
-	mpu->GyroY = (int16_t)(data[2] << 8 | data[3]);
-	mpu->GyroZ = (int16_t)(data[4] << 8 | data[5]);
+	mpu->GyroX_raw = (int32_t)(data[0] << 8 | data[1]);	
+	mpu->GyroY_raw = (int32_t)(data[2] << 8 | data[3]);
+	mpu->GyroZ_raw = (int32_t)(data[4] << 8 | data[5]);
 }
 
- void MPU6050_ReadAll(I2C_HandleTypeDef *hi2c,MPU6050 *mpu)
+ void MPU6050_ReadRawAll(I2C_HandleTypeDef *hi2c,MPU6050 *mpu)
 {
 	uint8_t data[14];
 	int16_t temp;
 	
 	i2cRead(hi2c,MPU6050_ADDRESS,MPU6050_ACCEL_XOUT_H, data, 14);
-	mpu->AccX = (float)((int16_t)(data[0] << 8 | data[1])) *mpu->Acc_factor ;	
-	mpu->AccY = (float)((int16_t)(data[2] << 8 | data[3])) * mpu->Acc_factor ;
-	mpu->AccZ =  (float)((int16_t)(data[4] << 8 | data[5])) * mpu->Acc_factor ;
-	/* Format temperature */
-	temp = (data[6] << 8 | data[7]);
-	mpu->temperature = (float)((float)((int16_t)temp) / (float)340.0 + (float)36.53);
+	mpu->AccX_raw = ((int32_t)(data[0] << 8 | data[1]))  ;	
+	mpu->AccY_raw = ((int32_t)(data[2] << 8 | data[3]))  ;
+	mpu->AccZ_raw =  ((int32_t)(data[4] << 8 | data[5]))  ;
+//	/* Format temperature */
+//	temp = (data[6] << 8 | data[7]);
+//	mpu->temperature = (float)((float)((int16_t)temp) / (float)340.0 + (float)36.53);
 	/* Format gyroscope data */
-	mpu->GyroX = (float)((int16_t)(data[8] << 8 | data[9])) * mpu->Gyro_factor - Gyro_offset[0] * iscalibrated ;
-	mpu->GyroY = (float)((int16_t)(data[10] << 8 | data[11])) * mpu->Gyro_factor - Gyro_offset[1] * iscalibrated;
-	mpu->GyroZ = (float)((int16_t)(data[12] << 8 | data[13])) * mpu->Gyro_factor - Gyro_offset[2] * iscalibrated;
+	mpu->GyroX_raw = ((int32_t)(data[8] << 8 | data[9]))  ;
+	mpu->GyroY_raw = ((int32_t)(data[10] << 8 | data[11]));
+	mpu->GyroZ_raw = ((int32_t)(data[12] << 8 | data[13]));
 	memcpy(&ref,&data,14);
 }
 
 // calculate offset of imu
-void calib(I2C_HandleTypeDef *hi2c, MPU6050 *mpu)
+void MPU6050_ReadNormAll(I2C_HandleTypeDef* hi2c, MPU6050 *mpu)
 {
-	for(calib_count=0;calib_count<200;calib_count++)
+	MPU6050_ReadRawAll(hi2c,mpu);
+	mpu->GyroX = (float)mpu->GyroX_raw * mpu->Gyro_factor - Gyro_offset[0]*iscalibrated* mpu->Gyro_factor;
+	mpu->GyroY = (float)mpu->GyroY_raw * mpu->Gyro_factor - Gyro_offset[1]*iscalibrated* mpu->Gyro_factor;
+	mpu->GyroZ = (float)mpu->GyroZ_raw * mpu->Gyro_factor - Gyro_offset[2]*iscalibrated* mpu->Gyro_factor;
+	mpu->AccX = (float)mpu->AccX_raw * mpu->Acc_factor  ;	
+	mpu->AccY = (float)mpu->AccY_raw * mpu->Acc_factor  ;
+	mpu->AccZ =  (float)mpu->AccZ_raw * mpu->Acc_factor  ;
+}
+
+void calib(I2C_HandleTypeDef *hi2c, MPU6050 *mpu,uint8_t calib_samples)
+{
+	int i;
+	int32_t raw_offset[3]={0,0,0};
+	for(i=0; i<calib_samples; i++)
 	{
-		MPU6050_ReadAll(hi2c,mpu);
-		Gyro_offset[0] += (float)mpu->GyroX/200;
-		Gyro_offset[1] += (float)mpu->GyroY/200;
-		Gyro_offset[2] += (float)mpu->GyroZ/200;
+		MPU6050_ReadRawAll(hi2c,mpu);
+		raw_offset[0] += mpu->GyroX_raw;
+		raw_offset[1] += mpu->GyroY_raw;
+		raw_offset[2] += mpu->GyroZ_raw;
 	}
-	iscalibrated =1;
+	Gyro_offset[0]=(float) raw_offset[0]/calib_samples;
+	Gyro_offset[1]=(float) raw_offset[1]/calib_samples;
+	Gyro_offset[2]=(float) raw_offset[2]/calib_samples;
+	iscalibrated = 1;
 }
 

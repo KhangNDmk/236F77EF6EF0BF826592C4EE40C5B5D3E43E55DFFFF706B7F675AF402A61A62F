@@ -69,9 +69,15 @@ typedef struct {
 	
 	float Gyro_factor;
 	float Acc_factor;
+	int32_t AccX_raw;
+	int32_t AccY_raw;
+	int32_t AccZ_raw;
 	float AccX;
 	float AccY;
 	float AccZ;
+	int32_t GyroX_raw;
+	int32_t GyroY_raw;
+	int32_t GyroZ_raw;
 	float GyroX;
 	float GyroY;
 	float GyroZ;
@@ -101,8 +107,9 @@ void MPU6050_Init(I2C_HandleTypeDef *hi2c,MPU6050 *mpu,  Acc_Set_Sense AccSensit
 
 void MPU6050_ReadAcc(I2C_HandleTypeDef *hi2c,MPU6050 *mpu);
 void MPU6050_ReadGyro(I2C_HandleTypeDef *hi2c,MPU6050 *mpu);
-void MPU6050_ReadAll(I2C_HandleTypeDef *hi2c,MPU6050 *mpu);
-void calib(I2C_HandleTypeDef *hi2c, MPU6050 *mpu);
+void MPU6050_ReadRawAll(I2C_HandleTypeDef *hi2c,MPU6050 *mpu);
+void MPU6050_ReadNormAll(I2C_HandleTypeDef *hi2c,MPU6050 *mpu);
+void calib(I2C_HandleTypeDef *hi2c, MPU6050 *mpu,uint8_t calib_samples);
 #ifdef __cplusplus
 }
 #endif
