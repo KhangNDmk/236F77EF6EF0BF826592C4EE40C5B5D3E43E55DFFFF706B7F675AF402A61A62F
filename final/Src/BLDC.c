@@ -40,7 +40,6 @@ float pid_controller(PID_OBJ* pid0 , float in)
     pid0->state[0] = in;
     pid0->state[2] = out;
 
-
     return (out);
 }
 /**/
@@ -52,14 +51,21 @@ void bldc2_init()
     bldc2.Voffset = 3;
     bldc2.CTR = (int)(htim1.Init.Period/2) ;
     bldc2.angle =0;
-
+    bldc2.Kf = 0.1;
 }
 /**/
 
+/**/
 void bldc_init()
 {
     bldc2_init();
 }
+/**/
+
+/**/
+
+/**/
+
 /**/
 int bldc_stop(volatile BLDC *bldc0)
 {
