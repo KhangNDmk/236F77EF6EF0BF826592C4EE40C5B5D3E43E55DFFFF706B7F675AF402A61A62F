@@ -8,7 +8,7 @@ extern "C" {
 extern volatile float twoKp;			// 2 * proportional gain (Kp)
 extern volatile float twoKi;			// 2 * integral gain (Ki)
 extern volatile double roll, pitch, yaw;
-
+extern volatile double RPY[3];
 // Madgwick Filter parameter
 extern volatile float beta;
 // declare quaternion variable

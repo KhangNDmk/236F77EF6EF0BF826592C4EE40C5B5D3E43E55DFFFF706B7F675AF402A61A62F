@@ -35,8 +35,7 @@ void MPU6050_Init(I2C_HandleTypeDef *hi2c, MPU6050 *mpu, Acc_Set_Sense AccSensit
 {
     iscalibrated = 0;
     uint8_t temp;
-    while (HAL_I2C_IsDeviceReady(hi2c, MPU6050_ADDRESS, 1, 100))
-        ;
+    while (HAL_I2C_IsDeviceReady(hi2c, MPU6050_ADDRESS, 1, 100));
     i2cRead(hi2c, MPU6050_ADDRESS, MPU6050_WHO_AM_I, &temp, 1);
     //while(temp==MPU6050_WHO_AM_I);
     buffer[0] = 0x00;

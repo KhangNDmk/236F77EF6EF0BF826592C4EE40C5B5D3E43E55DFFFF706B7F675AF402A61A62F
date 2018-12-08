@@ -17,6 +17,7 @@ volatile float twoKi = twoKiDef;											// 2 * integral gain (Ki)
 volatile double q0 = 1.0f, q1 = 0.0f, q2 = 0.0f, q3 = 0.0f;					// quaternion of sensor frame relative to auxiliary frame
 volatile float integralFBx = 0.0f,  integralFBy = 0.0f, integralFBz = 0.0f;	// integral error terms scaled by Ki
 volatile double RPY[3]={0,0,0};
+
 // Mahony 9DOF
 void MahonyAHRSupdate(float gx, float gy, float gz, float ax, float ay, float az, float mx, float my, float mz) {
 	float recipNorm;
@@ -287,7 +288,6 @@ void MadgwickAHRSupdate(float gx, float gy, float gz, float ax, float ay, float 
 
 
 // Madgwick 6DOF
-
 void MadgwickAHRSupdateIMU(float gx, float gy, float gz, float ax, float ay, float az) {
 	float recipNorm;
 	float s0, s1, s2, s3;
