@@ -9,6 +9,7 @@ int flag = 1;
 uint8_t buffer[2];        // buffer to transfer to i2c
 HAL_StatusTypeDef status; // flag to check transaction complete
 uint8_t ref[14];          // check data that have been read
+
 void i2cWrite(I2C_HandleTypeDef *hi2c, uint16_t address, uint16_t reg, uint8_t *data, uint8_t data_length)
 {
     status = HAL_OK;
@@ -88,6 +89,7 @@ void MPU6050_Init(I2C_HandleTypeDef *hi2c, MPU6050 *mpu, Acc_Set_Sense AccSensit
     default:
         break;
     }
+
 }
 
 void MPU6050_ReadAcc(I2C_HandleTypeDef *hi2c, MPU6050 *mpu)

@@ -30,6 +30,9 @@ typedef struct
     double sinR, cosR, sinP, cosY, sinY;
 }RPY_filter;
 
+void MPU6050_ReadData(I2C_HandleTypeDef *hi2c, MPU6050 *mpu);
+void MPU6050_ReadOffset(I2C_HandleTypeDef *hi2c, MPU6050 *mpu);
+
 void MPU6050_filter_Init(Madgwick_6DOFparam *p0);
 void MPU6050_filter(MPU6050 *m0, Madgwick_6DOFparam *p0, RPY_filter* rpy0 , float beta0, float sampleFreq);
 

@@ -3,4 +3,4 @@ Filter.c:125:6:MahonyAHRSupdateIMU	104	static
 Filter.c:22:6:MahonyAHRSupdate	160	static
 Filter.c:291:6:MadgwickAHRSupdateIMU	144	static
 Filter.c:193:6:MadgwickAHRSupdate	288	static
-Filter.c:368:6:qua2Euler	64	static
+Filter.c:369:6:qua2Euler	64	static

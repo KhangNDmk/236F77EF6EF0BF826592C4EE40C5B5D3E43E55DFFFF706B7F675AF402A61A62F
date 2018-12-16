@@ -81,6 +81,9 @@ typedef struct {
 	float GyroX;
 	float GyroY;
 	float GyroZ;
+    float GyroX_offset;
+    float GyroY_offset;
+    float GyroZ_offset;
 	float temperature;
 }MPU6050;
 

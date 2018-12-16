@@ -51,6 +51,7 @@
 #include "SVM.h"
 #include "IMU_filter.h"
 #include "MPU6050.h"
+#include "MPU9250.h"
 #include "Filter.h"
 /* USER CODE END Includes */
 
@@ -58,12 +59,12 @@
 
 /* USER CODE BEGIN PV */
 /* Private variables ---------------------------------------------------------*/
-MPU6050 mpu;
-Madgwick_6DOFparam filter1;
-RPY_filter rpy1;
+ MPU6050 mpu;
+ Madgwick_6DOFparam filter1;
+ RPY_filter rpy1;
 
 //volatile BLDC bldc1;
-int dutya, dutyb, dutyc;
+float dutya, dutyb, dutyc;
 int deg0 = 0;
 float out, out2;
 /* USER CODE END PV */
@@ -95,16 +96,17 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
         {
             deg0 = 0;
         }
-        MPU6050_ReadNormAll(&hi2c1,&mpu);
-        MPU6050_filter (&mpu, &filter1 , &rpy1 , 0.5f , 500.0f);
+        //MPU6050_filter_Init(&filter1);
+        MPU6050_ReadData(&hi2c1,&mpu);
+        MPU6050_filter (&mpu, &filter1 , &rpy1 , 2.5f , 100.0f);
 
 
         //MadgwickAHRSupdateIMU( mpu.GyroX, mpu.GyroY,mpu.GyroZ, mpu.AccX,mpu.AccY,mpu.AccZ);
         //qua2Euler();
 
-        dutya=rpy1.R;
-        dutyb=rpy1.P;
-        dutyc=rpy1.Y;
+        dutya=(dutya*31+rpy1.R)/32;
+        dutyb=(31*dutyb+rpy1.P)/32;
+        dutyc=(31*dutyc+rpy1.Y)/32;
         //__HAL_TIM_SET_COMPARE(&htim3, TIM_CHANNEL_1, dutya);
         //__HAL_TIM_SET_COMPARE(&htim3, TIM_CHANNEL_2, dutyb);
         //__HAL_TIM_SET_COMPARE(&htim3, TIM_CHANNEL_3, dutyc);
@@ -159,29 +161,31 @@ int main(void)
     /* USER CODE BEGIN 2 */
 
     //bldc_init(&bldc1, 0.36 ,20 ,VDC, 3 , 0.1);     //0.2857 ...0.32..0.07
+    HAL_Delay(1000);
     MPU6050_filter_Init(&filter1);
 
-    HAL_GPIO_WritePin(GPIOD, GPIO_PIN_1, GPIO_PIN_SET);
-    HAL_GPIO_WritePin(GPIOD, GPIO_PIN_3, GPIO_PIN_SET);
-    HAL_GPIO_WritePin(GPIOD, GPIO_PIN_5, GPIO_PIN_SET);
+//    HAL_GPIO_WritePin(GPIOD, GPIO_PIN_1, GPIO_PIN_SET);
+//    HAL_GPIO_WritePin(GPIOD, GPIO_PIN_3, GPIO_PIN_SET);
+//    HAL_GPIO_WritePin(GPIOD, GPIO_PIN_5, GPIO_PIN_SET);
+//
+//    HAL_TIM_PWM_Start(&htim4, TIM_CHANNEL_1);
+//
+//    HAL_TIM_PWM_Start(&htim3, TIM_CHANNEL_1);
+//    HAL_TIM_PWM_Start(&htim3, TIM_CHANNEL_2);
+//    HAL_TIM_PWM_Start(&htim3, TIM_CHANNEL_3);
+//
+//    __HAL_TIM_SET_COMPARE(&htim4, TIM_CHANNEL_1, 400);
+//
+//    __HAL_TIM_SET_COMPARE(&htim3, TIM_CHANNEL_1, 150);
+//    __HAL_TIM_SET_COMPARE(&htim3, TIM_CHANNEL_2, 0);
+//    __HAL_TIM_SET_COMPARE(&htim3, TIM_CHANNEL_3, 0);
 
-    HAL_TIM_PWM_Start(&htim4, TIM_CHANNEL_1);
 
-    HAL_TIM_PWM_Start(&htim3, TIM_CHANNEL_1);
-    HAL_TIM_PWM_Start(&htim3, TIM_CHANNEL_2);
-    HAL_TIM_PWM_Start(&htim3, TIM_CHANNEL_3);
-
-    __HAL_TIM_SET_COMPARE(&htim4, TIM_CHANNEL_1, 400);
-
-    __HAL_TIM_SET_COMPARE(&htim3, TIM_CHANNEL_1, 150);
-    __HAL_TIM_SET_COMPARE(&htim3, TIM_CHANNEL_2, 0);
-    __HAL_TIM_SET_COMPARE(&htim3, TIM_CHANNEL_3, 0);
-
-    HAL_Delay(500);
 
     /**/
     HAL_TIM_Base_Start_IT(&htim10);
-    MPU6050_Init(&hi2c1,&mpu,Acc_8G,Gyro_2000s);
+    MPU6050_Init(&hi2c1,&mpu,Acc_2G,Gyro_500s);
+    MPU6050_ReadOffset(&hi2c1, &mpu);
     /* USER CODE END 2 */
 
     /* Infinite loop */

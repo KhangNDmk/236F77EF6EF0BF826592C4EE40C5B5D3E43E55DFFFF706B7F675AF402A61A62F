@@ -11,6 +11,7 @@
 #include "MPU6050.h"
 #include "Filter.h"
 
+/* khoi tao tham so bo loc Madgwick*/
 void MPU6050_filter_Init(Madgwick_6DOFparam *p0)
 {
     p0->q0 = 1.0f;
@@ -18,7 +19,71 @@ void MPU6050_filter_Init(Madgwick_6DOFparam *p0)
     p0->q2 = 0.0f;
     p0->q3 = 0.0f;
 }
+/* het hamf khoi tao madgwick*/
 
+/*Doc thong so MPU*/
+void MPU6050_ReadData(I2C_HandleTypeDef *hi2c, MPU6050 *mpu)
+{
+    uint8_t data[14];
+    int i=0;
+    uint32_t data32[14];
+    i2cRead(hi2c, MPU6050_ADDRESS, MPU6050_ACCEL_XOUT_H, data, 14);
+
+    for(i=0; i<14; i++)
+    {
+        data32[i]=data[i];
+    }
+    /* read and format Acc parameter */
+    mpu->AccX_raw = (data32[0]<<8)+data32[1];
+    mpu->AccY_raw = (data32[2]<<8)+data32[3];
+    mpu->AccZ_raw = (data32[4]<<8)+data32[5];
+
+    mpu->AccX = (float)mpu->AccX_raw * mpu->Acc_factor;
+    mpu->AccY = (float)mpu->AccY_raw * mpu->Acc_factor;
+    mpu->AccZ = (float)mpu->AccZ_raw * mpu->Acc_factor;
+
+    /* Format gyroscope data */
+    mpu->GyroX_raw = (data32[8]<<8)+data32[9];
+    mpu->GyroY_raw = (data32[10]<<8)+data32[11];
+    mpu->GyroZ_raw = (data32[12]<<8)+data32[13];
+
+    /* tru offset*/
+    mpu->GyroX = ((float)mpu->GyroX_raw - mpu->GyroX_offset)*mpu->Gyro_factor;
+    mpu->GyroY = ((float)mpu->GyroY_raw - mpu->GyroY_offset)*mpu->Gyro_factor;
+    mpu->GyroZ = ((float)mpu->GyroZ_raw - mpu->GyroZ_offset)*mpu->Gyro_factor;
+}
+/*Ket thuc ham doc thong so MPU*/
+
+/**/
+void MPU6050_ReadOffset(I2C_HandleTypeDef *hi2c, MPU6050 *mpu)
+{
+    uint8_t data[14];
+    int i,j;
+    uint32_t data32[14];
+    mpu->GyroX_offset = 0;
+    mpu->GyroY_offset = 0;
+    mpu->GyroZ_offset = 0;
+
+    for(i=0; i<100; i++)
+    {
+        i2cRead(hi2c, MPU6050_ADDRESS, MPU6050_ACCEL_XOUT_H, data, 14);
+        for(j=0; j<14; j++)
+        {
+            data32[j]=data[j];
+        }
+        mpu->GyroX_offset += ((data32[8] << 8) + data32[9]);
+        mpu->GyroY_offset += ((data32[10] << 8)+ data32[11]);
+        mpu->GyroZ_offset += ((data32[12] << 8) + data32[13]);
+        HAL_Delay(5);
+    }
+
+    mpu->GyroX_offset *= 0.01;
+    mpu->GyroY_offset *= 0.01;
+    mpu->GyroZ_offset *= 0.01;
+}
+/**/
+
+/**/
 void MPU6050_filter(MPU6050 *m0, Madgwick_6DOFparam *p0, RPY_filter* rpy0 , float beta0, float sampleFreq)
 {
     // Rate of change of quaternion from gyroscope
@@ -83,13 +148,14 @@ void MPU6050_filter(MPU6050 *m0, Madgwick_6DOFparam *p0, RPY_filter* rpy0 , floa
     p0->q2 *= p0->recipNorm;
     p0->q3 *= p0->recipNorm;
 
-    // chuyen sang RPY
+    // chuyen sang RPY,
+    //Can kiem tra lai
     rpy0->sinR = 2.0*((double)(p0->q0*p0->q1 + p0->q2*p0->q3 ));
     rpy0->cosR = 1- 2*((double)(p0->q1*p0->q1 + p0->q2*p0->q2));
 
     rpy0->sinP = 2*((double)(p0->q0*p0->q2 - p0->q1*p0->q3));
 
-    rpy0->sinY = 2*((double)(p0->q0*p0->q3 - p0->q1*p0->q2));
+    rpy0->sinY = 2*((double)(p0->q0*p0->q3 + p0->q1*p0->q2));
     rpy0->cosY = 1- 2*((double)(p0->q2*p0->q2 + p0->q3*p0->q3));
 
 /* CAN SUA LAI CHO NAY  */
