@@ -313,6 +313,11 @@ void MPU9250_Init8963(I2C_HandleTypeDef *hi2c, MPU9250 *mpu)
     temp = (mpu->mscale << 4) | 0x06;
     i2cWrite(hi2c, AK8963_ADDRESS, AK8963_CNTL, &temp, 1);
     HAL_Delay(10);
+
+    /**/
+    mpu->MagX_offset = +470.;  // User environmental x-axis correction in milliGauss, should be automatically calculated
+    mpu->MagY_offset = +120.;  // User environmental x-axis correction in milliGauss
+    mpu->MagZ_offset = +125.;  // User environmental x-axis correction in milliGauss
 }
 /*end MPU9250_Init8963*/
 
@@ -473,9 +478,9 @@ void MPU9250_Madgwick(MPU9250 *mpu)
     float ax=mpu->AccX;
     float ay=mpu->AccY;
     float az=mpu->AccZ;
-    float gx=mpu->GyroX;
-    float gy=mpu->GyroY;
-    float gz=mpu->GyroZ;
+    float gx=mpu->GyroX*PI/180.0f;
+    float gy=mpu->GyroY*PI/180.0f;
+    float gz=mpu->GyroZ*PI/180.0f;
     float mx=mpu->MagX;
     float my=mpu->MagY;
     float mz=mpu->MagZ;
