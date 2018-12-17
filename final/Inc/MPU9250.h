@@ -8,12 +8,17 @@
 #ifndef MPU9250_H_
 #define MPU9250_H_
 #ifdef __cplusplus
-extern "C" {
+extern "C"
+{
 #endif
 /* Noi dung header */
 #include "main.h"
+#include <math.h>
 #include "stm32f4xx.h"
 #include "stm32f4xx_hal_i2c.h"
+//#include "MPU6050.h"
+#include <string.h>
+#include "Filter.h"
 
 
 //Magnetometer Registers
@@ -161,60 +166,72 @@ extern "C" {
 #endif
 /**/
 // Set initial input parameters
-typedef enum  {
-  AFS_2G = 0,
-  AFS_4G,
-  AFS_8G,
-  AFS_16G
-}Ascale;
+typedef enum
+{
+    AFS_2G = 0, AFS_4G, AFS_8G, AFS_16G
+} Ascale;
 
-typedef enum  {
-  GFS_250DPS = 0,
-  GFS_500DPS,
-  GFS_1000DPS,
-  GFS_2000DPS
-}Gscale;
+typedef enum
+{
+    GFS_250DPS = 0, GFS_500DPS, GFS_1000DPS, GFS_2000DPS
+} Gscale;
 
-typedef enum  {
-  MFS_14BITS = 0, // 0.6 mG per LSB
-  MFS_16BITS      // 0.15 mG per LSB
-}Mscale;
+typedef enum
+{
+    MFS_14BITS = 0, // 0.6 mG per LSB
+    MFS_16BITS      // 0.15 mG per LSB
+} Mscale;
 
 //uint8_t Ascale = AFS_2G;     // AFS_2G, AFS_4G, AFS_8G, AFS_16G
 //uint8_t Gscale = GFS_250DPS; // GFS_250DPS, GFS_500DPS, GFS_1000DPS, GFS_2000DPS
 //uint8_t Mscale = MFS_16BITS; // MFS_14BITS or MFS_16BITS, 14-bit or 16-bit magnetometer resolution
-//uint8_t Mmode = 0x06;        // Either 8 Hz 0x02) or 100 Hz (0x06) magnetometer data ODR
+//uint8_t Mmode = 0x06; // Either 8 Hz 0x02) or 100 Hz (0x06) magnetometer data ODR
 float aRes, gRes, mRes;      // scale resolutions per LSB for the sensors
 
 /**/
-typedef struct {
+typedef struct
+{
 
-    float Gyro_factor;
-    float Acc_factor;
-    float Mag_factor;
-    int32_t AccX_raw;
-    int32_t AccY_raw;
-    int32_t AccZ_raw;
-    float AccX;
-    float AccY;
-    float AccZ;
-    int32_t GyroX_raw;
-    int32_t GyroY_raw;
-    int32_t GyroZ_raw;
-    float GyroX;
-    float GyroY;
-    float GyroZ;
-    float GyroX_offset;
-    float GyroY_offset;
-    float GyroZ_offset;
+    uint8_t ascale;
+    uint8_t gscale;
+    uint8_t mscale;
+    float Gyro_factor, Acc_factor, Mag_factor;
+
+    int16_t AccX_raw, AccY_raw, AccZ_raw;
+    float AccX_offset, AccY_offset, AccZ_offset;
+    float AccX, AccY, AccZ;
+
+    int16_t GyroX_raw, GyroY_raw, GyroZ_raw;
+    float GyroX, GyroY, GyroZ;
+    float GyroX_offset, GyroY_offset, GyroZ_offset;
+
+    int16_t MagX_raw, MagY_raw, MagZ_raw;
+    float MagCalibX, MagCalibY, MagCalibZ;
+    float MagX, MagY, MagZ;
+    float MagX_offset, MagY_offset, MagZ_offset;
+
+    float q[4];
+    float roll, pitch, yaw;
     float temperature;
-}MPU9250;
-
+} MPU9250;
 
 /**/
 void i2cRead(I2C_HandleTypeDef *hi2c, uint16_t address, uint16_t reg,uint8_t* data, uint8_t data_length);
 void i2cWrite(I2C_HandleTypeDef *hi2c, uint16_t address, uint16_t reg, uint8_t *data, uint8_t data_length);
 
+void MPU9250_Init(I2C_HandleTypeDef *hi2c, MPU9250 *mpu, Ascale Ascale0,
+        Gscale Gscale0, Mscale Mscale0);
+void MPU9250_Reset(I2C_HandleTypeDef *hi2c, MPU9250 *mpu);
+void MPU9250_calib(I2C_HandleTypeDef *hi2c, MPU9250 *mpu);
+void MPU9250_Init8963(I2C_HandleTypeDef *hi2c, MPU9250 *mpu);
+void MPU9250_SetParam(I2C_HandleTypeDef *hi2c, MPU9250 *mpu);
+
+void MPU9250_readAcc(I2C_HandleTypeDef *hi2c, MPU9250 *mpu);
+void MPU9250_readMag(I2C_HandleTypeDef *hi2c, MPU9250 *mpu);
+void MPU9250_readGyro(I2C_HandleTypeDef *hi2c, MPU9250 *mpu);
+
+void MPU9250_Madgwick(MPU9250 *mpu);
+void MPU9250_read(I2C_HandleTypeDef *hi2c, MPU9250 *mpu);
 /*Ket thuc noi dung header*/
 #ifdef __cplusplus
 }

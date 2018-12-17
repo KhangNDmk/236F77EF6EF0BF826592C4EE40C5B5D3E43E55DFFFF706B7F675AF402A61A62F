@@ -9,7 +9,7 @@
 #define twoKiDef	(2.0f * 0.001f)	// 2 * integral gain
 
 // Madgwick parameter
-#define betaDef		0.5f		// 2 * proportional gain
+#define betaDef		1.5f		// 2 * proportional gain
 
 volatile float beta = betaDef;
 volatile float twoKp = twoKpDef;											// 2 * proportional gain (Kp)

@@ -1,41 +1,40 @@
-
 /**
  ******************************************************************************
-* @file           : main.c
-* @brief          : Main program body
-******************************************************************************
-** This notice applies to any and all portions of this file
-* that are not between comment pairs USER CODE BEGIN and
-* USER CODE END. Other portions of this file, whether 
-* inserted by the user or by software development tools
-* are owned by their respective copyright owners.
-*
-* COPYRIGHT(c) 2018 STMicroelectronics
-*
-* Redistribution and use in source and binary forms, with or without modification,
-* are permitted provided that the following conditions are met:
-*   1. Redistributions of source code must retain the above copyright notice,
-*      this list of conditions and the following disclaimer.
-*   2. Redistributions in binary form must reproduce the above copyright notice,
-*      this list of conditions and the following disclaimer in the documentation
-*      and/or other materials provided with the distribution.
-*   3. Neither the name of STMicroelectronics nor the names of its contributors
-*      may be used to endorse or promote products derived from this software
-*      without specific prior written permission.
-*
-* THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
-* AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
-* IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
-* DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
-* FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
-* DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
-* SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
-* CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
-* OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
-* OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-*
-******************************************************************************
-*/
+ * @file           : main.c
+ * @brief          : Main program body
+ ******************************************************************************
+ ** This notice applies to any and all portions of this file
+ * that are not between comment pairs USER CODE BEGIN and
+ * USER CODE END. Other portions of this file, whether
+ * inserted by the user or by software development tools
+ * are owned by their respective copyright owners.
+ *
+ * COPYRIGHT(c) 2018 STMicroelectronics
+ *
+ * Redistribution and use in source and binary forms, with or without modification,
+ * are permitted provided that the following conditions are met:
+ *   1. Redistributions of source code must retain the above copyright notice,
+ *      this list of conditions and the following disclaimer.
+ *   2. Redistributions in binary form must reproduce the above copyright notice,
+ *      this list of conditions and the following disclaimer in the documentation
+ *      and/or other materials provided with the distribution.
+ *   3. Neither the name of STMicroelectronics nor the names of its contributors
+ *      may be used to endorse or promote products derived from this software
+ *      without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+ * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+ * DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
+ * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+ * SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+ * CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+ * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+ * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ *
+ ******************************************************************************
+ */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
 #include "stm32f4xx_hal.h"
@@ -49,8 +48,8 @@
 /* USER CODE BEGIN Includes */
 #include "BLDC.h"
 #include "SVM.h"
-#include "IMU_filter.h"
-#include "MPU6050.h"
+//#include "IMU_filter.h"
+//#include "MPU6050.h"
 #include "MPU9250.h"
 #include "Filter.h"
 /* USER CODE END Includes */
@@ -59,9 +58,9 @@
 
 /* USER CODE BEGIN PV */
 /* Private variables ---------------------------------------------------------*/
- MPU6050 mpu;
- Madgwick_6DOFparam filter1;
- RPY_filter rpy1;
+
+MPU9250 mpu2;
+
 
 //volatile BLDC bldc1;
 float dutya, dutyb, dutyc;
@@ -83,38 +82,25 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 
     if (htim->Instance == htim10.Instance)
     {
-        //out2 =out;
-        //out=0;
-
-        //mpu.GyroY -= 2;
-        //out = mpu.GyroY / 90;
+        MPU9250_read(&hi2c1, &mpu2);
 
         //bgc_bldchdl(&bldc1, out);
         //bgc_SVPWM(&bldc1 , 200);
 
-        if (deg0 == 1000)
-        {
-            deg0 = 0;
-        }
         //MPU6050_filter_Init(&filter1);
-        MPU6050_ReadData(&hi2c1,&mpu);
-        MPU6050_filter (&mpu, &filter1 , &rpy1 , 2.5f , 100.0f);
-
+//        MPU6050_ReadData(&hi2c1,&mpu);
+//        MPU6050_filter (&mpu, &filter1 , &rpy1 , 2.5f , 100.0f);
 
         //MadgwickAHRSupdateIMU( mpu.GyroX, mpu.GyroY,mpu.GyroZ, mpu.AccX,mpu.AccY,mpu.AccZ);
         //qua2Euler();
 
-        dutya=(dutya*31+rpy1.R)/32;
-        dutyb=(31*dutyb+rpy1.P)/32;
-        dutyc=(31*dutyc+rpy1.Y)/32;
+//        dutya=(dutya*31+rpy1.R)/32;
+//        dutyb=(31*dutyb+rpy1.P)/32;
+//        dutyc=(31*dutyc+rpy1.Y)/32;
         //__HAL_TIM_SET_COMPARE(&htim3, TIM_CHANNEL_1, dutya);
         //__HAL_TIM_SET_COMPARE(&htim3, TIM_CHANNEL_2, dutyb);
         //__HAL_TIM_SET_COMPARE(&htim3, TIM_CHANNEL_3, dutyc);
         /**/
-
-        //MPU6050_ReadAll(&hi2c1,&mpu);
-        //MadgwickAHRSupdateIMU(mpu.GyroX,mpu.GyroY,mpu.GyroZ,mpu.AccX,mpu.AccY,mpu.AccZ);
-        //qua2Euler();
     }
 }
 /* USER CODE END 0 */
@@ -162,7 +148,7 @@ int main(void)
 
     //bldc_init(&bldc1, 0.36 ,20 ,VDC, 3 , 0.1);     //0.2857 ...0.32..0.07
     HAL_Delay(1000);
-    MPU6050_filter_Init(&filter1);
+//    MPU6050_filter_Init(&filter1);
 
 //    HAL_GPIO_WritePin(GPIOD, GPIO_PIN_1, GPIO_PIN_SET);
 //    HAL_GPIO_WritePin(GPIOD, GPIO_PIN_3, GPIO_PIN_SET);
@@ -179,13 +165,12 @@ int main(void)
 //    __HAL_TIM_SET_COMPARE(&htim3, TIM_CHANNEL_1, 150);
 //    __HAL_TIM_SET_COMPARE(&htim3, TIM_CHANNEL_2, 0);
 //    __HAL_TIM_SET_COMPARE(&htim3, TIM_CHANNEL_3, 0);
-
-
+    MPU9250_Init(&hi2c1, &mpu2, AFS_4G, GFS_250DPS, MFS_16BITS);
 
     /**/
     HAL_TIM_Base_Start_IT(&htim10);
-    MPU6050_Init(&hi2c1,&mpu,Acc_2G,Gyro_500s);
-    MPU6050_ReadOffset(&hi2c1, &mpu);
+//    MPU6050_Init(&hi2c1,&mpu,Acc_2G,Gyro_500s);
+//    MPU6050_ReadOffset(&hi2c1, &mpu);
     /* USER CODE END 2 */
 
     /* Infinite loop */
@@ -194,7 +179,11 @@ int main(void)
     {
 
         /* USER CODE END WHILE */
-
+        HAL_GPIO_TogglePin(GPIOD, GPIO_PIN_12);
+        HAL_GPIO_TogglePin(GPIOD, GPIO_PIN_13);
+        HAL_GPIO_TogglePin(GPIOD, GPIO_PIN_14);
+        HAL_GPIO_TogglePin(GPIOD, GPIO_PIN_15);
+        HAL_Delay(1000);
         /* USER CODE BEGIN 3 */
     }
     /* USER CODE END 3 */
@@ -211,13 +200,14 @@ void SystemClock_Config(void)
     RCC_ClkInitTypeDef RCC_ClkInitStruct;
 
     /**Configure the main internal regulator output voltage 
-*/
-    __HAL_RCC_PWR_CLK_ENABLE();
+     */
+    __HAL_RCC_PWR_CLK_ENABLE()
+    ;
 
     __HAL_PWR_VOLTAGESCALING_CONFIG(PWR_REGULATOR_VOLTAGE_SCALE1);
 
     /**Initializes the CPU, AHB and APB busses clocks 
-*/
+     */
     RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSE;
     RCC_OscInitStruct.HSEState = RCC_HSE_ON;
     RCC_OscInitStruct.PLL.PLLState = RCC_PLL_ON;
@@ -232,11 +222,9 @@ void SystemClock_Config(void)
     }
 
     /**Initializes the CPU, AHB and APB busses clocks 
-*/
-    RCC_ClkInitStruct.ClockType = RCC_CLOCKTYPE_HCLK 
-                                    | RCC_CLOCKTYPE_SYSCLK 
-                                    | RCC_CLOCKTYPE_PCLK1 
-                                    | RCC_CLOCKTYPE_PCLK2;
+     */
+    RCC_ClkInitStruct.ClockType = RCC_CLOCKTYPE_HCLK | RCC_CLOCKTYPE_SYSCLK
+            | RCC_CLOCKTYPE_PCLK1 | RCC_CLOCKTYPE_PCLK2;
     RCC_ClkInitStruct.SYSCLKSource = RCC_SYSCLKSOURCE_PLLCLK;
     RCC_ClkInitStruct.AHBCLKDivider = RCC_SYSCLK_DIV1;
     RCC_ClkInitStruct.APB1CLKDivider = RCC_HCLK_DIV4;
@@ -248,11 +236,11 @@ void SystemClock_Config(void)
     }
 
     /**Configure the Systick interrupt time 
-*/
+     */
     HAL_SYSTICK_Config(HAL_RCC_GetHCLKFreq() / 1000);
 
     /**Configure the Systick 
-*/
+     */
     HAL_SYSTICK_CLKSourceConfig(SYSTICK_CLKSOURCE_HCLK);
 
     /* SysTick_IRQn interrupt configuration */
@@ -291,7 +279,7 @@ void assert_failed(uint8_t *file, uint32_t line)
 {
     /* USER CODE BEGIN 6 */
     /* User can add his own implementation to report the file name and line number,
-tex: printf("Wrong parameters value: file %s on line %d\r\n", file, line) */
+     tex: printf("Wrong parameters value: file %s on line %d\r\n", file, line) */
     /* USER CODE END 6 */
 }
 #endif /* USE_FULL_ASSERT */
