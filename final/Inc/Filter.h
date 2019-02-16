@@ -9,10 +9,12 @@ extern volatile float twoKp;			// 2 * proportional gain (Kp)
 extern volatile float twoKi;			// 2 * integral gain (Ki)
 extern volatile double roll, pitch, yaw;
 extern volatile double RPY[3];
+#define PI 3.1415926f
+#define sampleFreq  500.0f
 // Madgwick Filter parameter
 extern volatile float beta;
 // declare quaternion variable
-//extern volatile double  q0,q1,q2,q3;
+extern volatile double  q0,q1,q2,q3;
 
 void MadgwickAHRSupdate(float gx, float gy, float gz, float ax, float ay, float az, float mx, float my, float mz);
 void MadgwickAHRSupdateIMU(float gx, float gy, float gz, float ax, float ay, float az);

@@ -20,7 +20,13 @@ extern "C"
 #include <string.h>
 #include "Filter.h"
 
-
+/**/
+double e_m,sf;//filter efficient, magnitude error, scale factor, acc norm
+#define alphaAcc 0.004f
+#define alphaMag 0.0004f
+#define alphaDef  0.01f
+volatile float alpha = alphaDef;
+/**/
 //Magnetometer Registers
 #define AK8963_ADDRESS   0x0C<<1
 #define AK8963_WHO_AM_I  0x00 // should return 0x48
@@ -232,6 +238,7 @@ void MPU9250_readGyro(I2C_HandleTypeDef *hi2c, MPU9250 *mpu);
 
 void MPU9250_Madgwick(MPU9250 *mpu);
 void MPU9250_read(I2C_HandleTypeDef *hi2c, MPU9250 *mpu);
+void Myfilter9DOF(MPU9250* mpu);
 /*Ket thuc noi dung header*/
 #ifdef __cplusplus
 }

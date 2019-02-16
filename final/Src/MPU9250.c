@@ -7,12 +7,10 @@
 
 #include "MPU9250.h"
 
-
 /**/
 //int flag = 1;
 //HAL_StatusTypeDef status; // flag to check transaction complete
 //uint8_t ref[14];          // check data that have been read
-
 /*begin MPU9250_read*/
 void MPU9250_read(I2C_HandleTypeDef *hi2c, MPU9250 *mpu)
 {
@@ -20,6 +18,7 @@ void MPU9250_read(I2C_HandleTypeDef *hi2c, MPU9250 *mpu)
     MPU9250_readAcc(hi2c, mpu);
     MPU9250_readMag(hi2c, mpu);
     MPU9250_Madgwick(mpu);
+//    Myfilter9DOF(mpu);
 }
 /*end MPU9250_read*/
 
@@ -84,9 +83,9 @@ void MPU9250_readMag(I2C_HandleTypeDef *hi2c, MPU9250 *mpu)
         uint8_t c = rawData[6]; // End data read by reading ST2 register
         if (!(c & 0x08)) // Check if magnetic sensor overflow set, if not then report data
         {
-            mpu->MagX_raw =(int16_t) (((int16_t) rawData[1] << 8) | rawData[0]); // Turn the MSB and LSB into a signed 16-bit value
-            mpu->MagY_raw =(int16_t) (((int16_t) rawData[3] << 8) | rawData[2]); // Data stored as little Endian
-            mpu->MagZ_raw =(int16_t) (((int16_t) rawData[5] << 8) | rawData[4]);
+            mpu->MagX_raw = (int16_t) (((int16_t) rawData[1] << 8) | rawData[0]); // Turn the MSB and LSB into a signed 16-bit value
+            mpu->MagY_raw = (int16_t) (((int16_t) rawData[3] << 8) | rawData[2]); // Data stored as little Endian
+            mpu->MagZ_raw = (int16_t) (((int16_t) rawData[5] << 8) | rawData[4]);
         }
     }
 
@@ -315,15 +314,14 @@ void MPU9250_Init8963(I2C_HandleTypeDef *hi2c, MPU9250 *mpu)
     HAL_Delay(10);
 
     /**/
-    mpu->MagX_offset = +470.;  // User environmental x-axis correction in milliGauss, should be automatically calculated
+    mpu->MagX_offset = +470.; // User environmental x-axis correction in milliGauss, should be automatically calculated
     mpu->MagY_offset = +120.;  // User environmental x-axis correction in milliGauss
     mpu->MagZ_offset = +125.;  // User environmental x-axis correction in milliGauss
 }
 /*end MPU9250_Init8963*/
 
 /*begin MPU9250_Init*/
-void MPU9250_Init(I2C_HandleTypeDef *hi2c, MPU9250 *mpu, Ascale Ascale0,
-        Gscale Gscale0, Mscale Mscale0)
+void MPU9250_Init(I2C_HandleTypeDef *hi2c, MPU9250 *mpu, Ascale Ascale0, Gscale Gscale0, Mscale Mscale0)
 {
     // Store user setting
     mpu->ascale = Ascale0;
@@ -331,10 +329,10 @@ void MPU9250_Init(I2C_HandleTypeDef *hi2c, MPU9250 *mpu, Ascale Ascale0,
     mpu->mscale = Mscale0;
 
     /* store default quaternion*/
-    mpu->q[0]=1.0f;
-    mpu->q[1]=0.0f;
-    mpu->q[2]=0.0f;
-    mpu->q[3]=0.0f;
+    mpu->q[0] = 1.0f;
+    mpu->q[1] = 0.0f;
+    mpu->q[2] = 0.0f;
+    mpu->q[3] = 0.0f;
     uint8_t whoami;
     /**/
 
@@ -464,31 +462,28 @@ void MPU9250_SetParam(I2C_HandleTypeDef *hi2c, MPU9250 *mpu)
 
 void MPU9250_Madgwick(MPU9250 *mpu)
 {
-
-
     float recipNorm;
     float s0, s1, s2, s3;
     float qDot1, qDot2, qDot3, qDot4;
     float hx, hy;
-    float _2q0mx, _2q0my, _2q0mz, _2q1mx, _2bx, _2bz, _4bx, _4bz, _2q0, _2q1,
-            _2q2, _2q3, _2q0q2, _2q2q3, q0q0, q0q1, q0q2, q0q3, q1q1, q1q2,
-            q1q3, q2q2, q2q3, q3q3;
+    float _2q0mx, _2q0my, _2q0mz, _2q1mx, _2bx, _2bz, _4bx, _4bz, _2q0, _2q1, _2q2, _2q3, _2q0q2, _2q2q3,
+            q0q0, q0q1, q0q2, q0q3, q1q1, q1q2, q1q3, q2q2, q2q3, q3q3;
     float roll, pitch, yaw;
-    float PI = 3.14159265358979323846f;
-    float ax=mpu->AccX;
-    float ay=mpu->AccY;
-    float az=mpu->AccZ;
-    float gx=mpu->GyroX*PI/180.0f;
-    float gy=mpu->GyroY*PI/180.0f;
-    float gz=mpu->GyroZ*PI/180.0f;
-    float mx=mpu->MagX;
-    float my=mpu->MagY;
-    float mz=mpu->MagZ;
+//    float PI = 3.14159265358979323846f;
+    float ax = mpu->AccX;
+    float ay = mpu->AccY;
+    float az = mpu->AccZ;
+    float gx = mpu->GyroX * PI / 180.0f;
+    float gy = mpu->GyroY * PI / 180.0f;
+    float gz = mpu->GyroZ * PI / 180.0f;
+    float mx = mpu->MagY;
+    float my = mpu->MagX;
+    float mz = mpu->MagZ;
     float q0 = mpu->q[0];
     float q1 = mpu->q[1];
     float q2 = mpu->q[2];
     float q3 = mpu->q[3];
-    float sampleFreq=500.0f;
+//    float sampleFreq = 500.0f;
     // Use IMU algorithm if magnetometer measurement invalid (avoids NaN in magnetometer normalisation)
     if ((mx == 0.0f) && (my == 0.0f) && (mz == 0.0f))
     {
@@ -541,63 +536,39 @@ void MPU9250_Madgwick(MPU9250 *mpu)
         q3q3 = q3 * q3;
 
         // Reference direction of Earth's magnetic field
-        hx = mx * q0q0 - _2q0my * q3 + _2q0mz * q2 + mx * q1q1 + _2q1 * my * q2
-                + _2q1 * mz * q3 - mx * q2q2 - mx * q3q3;
+        hx = mx * q0q0 - _2q0my * q3 + _2q0mz * q2 + mx * q1q1 + _2q1 * my * q2 + _2q1 * mz * q3 - mx * q2q2
+                - mx * q3q3;
 
-        hy = _2q0mx * q3 + my * q0q0 - _2q0mz * q1 + _2q1mx * q2 - my * q1q1
-                + my * q2q2 + _2q2 * mz * q3 - my * q3q3;
+        hy = _2q0mx * q3 + my * q0q0 - _2q0mz * q1 + _2q1mx * q2 - my * q1q1 + my * q2q2 + _2q2 * mz * q3
+                - my * q3q3;
 
         _2bx = sqrt(hx * hx + hy * hy);
 
-        _2bz = -_2q0mx * q2 + _2q0my * q1 + mz * q0q0 + _2q1mx * q3 - mz * q1q1
-                + _2q2 * my * q3 - mz * q2q2 + mz * q3q3;
+        _2bz = -_2q0mx * q2 + _2q0my * q1 + mz * q0q0 + _2q1mx * q3 - mz * q1q1 + _2q2 * my * q3 - mz * q2q2
+                + mz * q3q3;
 
         _4bx = 2.0f * _2bx;
         _4bz = 2.0f * _2bz;
 
         // Gradient decent algorithm corrective step
-        s0 = -_2q2 * (2.0f * q1q3 - _2q0q2 - ax)
-                + _2q1 * (2.0f * q0q1 + _2q2q3 - ay)
-                - _2bz * q2
-                        * (_2bx * (0.5f - q2q2 - q3q3) + _2bz * (q1q3 - q0q2)
-                                - mx)
-                + (-_2bx * q3 + _2bz * q1)
-                        * (_2bx * (q1q2 - q0q3) + _2bz * (q0q1 + q2q3) - my)
-                + _2bx * q2
-                        * (_2bx * (q0q2 + q1q3) + _2bz * (0.5f - q1q1 - q2q2)
-                                - mz);
-        s1 = _2q3 * (2.0f * q1q3 - _2q0q2 - ax)
-                + _2q0 * (2.0f * q0q1 + _2q2q3 - ay)
+        s0 = -_2q2 * (2.0f * q1q3 - _2q0q2 - ax) + _2q1 * (2.0f * q0q1 + _2q2q3 - ay)
+                - _2bz * q2 * (_2bx * (0.5f - q2q2 - q3q3) + _2bz * (q1q3 - q0q2) - mx)
+                + (-_2bx * q3 + _2bz * q1) * (_2bx * (q1q2 - q0q3) + _2bz * (q0q1 + q2q3) - my)
+                + _2bx * q2 * (_2bx * (q0q2 + q1q3) + _2bz * (0.5f - q1q1 - q2q2) - mz);
+        s1 = _2q3 * (2.0f * q1q3 - _2q0q2 - ax) + _2q0 * (2.0f * q0q1 + _2q2q3 - ay)
                 - 4.0f * q1 * (1 - 2.0f * q1q1 - 2.0f * q2q2 - az)
-                + _2bz * q3
-                        * (_2bx * (0.5f - q2q2 - q3q3) + _2bz * (q1q3 - q0q2)
-                                - mx)
-                + (_2bx * q2 + _2bz * q0)
-                        * (_2bx * (q1q2 - q0q3) + _2bz * (q0q1 + q2q3) - my)
-                + (_2bx * q3 - _4bz * q1)
-                        * (_2bx * (q0q2 + q1q3) + _2bz * (0.5f - q1q1 - q2q2)
-                                - mz);
-        s2 = -_2q0 * (2.0f * q1q3 - _2q0q2 - ax)
-                + _2q3 * (2.0f * q0q1 + _2q2q3 - ay)
+                + _2bz * q3 * (_2bx * (0.5f - q2q2 - q3q3) + _2bz * (q1q3 - q0q2) - mx)
+                + (_2bx * q2 + _2bz * q0) * (_2bx * (q1q2 - q0q3) + _2bz * (q0q1 + q2q3) - my)
+                + (_2bx * q3 - _4bz * q1) * (_2bx * (q0q2 + q1q3) + _2bz * (0.5f - q1q1 - q2q2) - mz);
+        s2 = -_2q0 * (2.0f * q1q3 - _2q0q2 - ax) + _2q3 * (2.0f * q0q1 + _2q2q3 - ay)
                 - 4.0f * q2 * (1 - 2.0f * q1q1 - 2.0f * q2q2 - az)
-                + (-_4bx * q2 - _2bz * q0)
-                        * (_2bx * (0.5f - q2q2 - q3q3) + _2bz * (q1q3 - q0q2)
-                                - mx)
-                + (_2bx * q1 + _2bz * q3)
-                        * (_2bx * (q1q2 - q0q3) + _2bz * (q0q1 + q2q3) - my)
-                + (_2bx * q0 - _4bz * q2)
-                        * (_2bx * (q0q2 + q1q3) + _2bz * (0.5f - q1q1 - q2q2)
-                                - mz);
-        s3 = _2q1 * (2.0f * q1q3 - _2q0q2 - ax)
-                + _2q2 * (2.0f * q0q1 + _2q2q3 - ay)
-                + (-_4bx * q3 + _2bz * q1)
-                        * (_2bx * (0.5f - q2q2 - q3q3) + _2bz * (q1q3 - q0q2)
-                                - mx)
-                + (-_2bx * q0 + _2bz * q2)
-                        * (_2bx * (q1q2 - q0q3) + _2bz * (q0q1 + q2q3) - my)
-                + _2bx * q1
-                        * (_2bx * (q0q2 + q1q3) + _2bz * (0.5f - q1q1 - q2q2)
-                                - mz);
+                + (-_4bx * q2 - _2bz * q0) * (_2bx * (0.5f - q2q2 - q3q3) + _2bz * (q1q3 - q0q2) - mx)
+                + (_2bx * q1 + _2bz * q3) * (_2bx * (q1q2 - q0q3) + _2bz * (q0q1 + q2q3) - my)
+                + (_2bx * q0 - _4bz * q2) * (_2bx * (q0q2 + q1q3) + _2bz * (0.5f - q1q1 - q2q2) - mz);
+        s3 = _2q1 * (2.0f * q1q3 - _2q0q2 - ax) + _2q2 * (2.0f * q0q1 + _2q2q3 - ay)
+                + (-_4bx * q3 + _2bz * q1) * (_2bx * (0.5f - q2q2 - q3q3) + _2bz * (q1q3 - q0q2) - mx)
+                + (-_2bx * q0 + _2bz * q2) * (_2bx * (q1q2 - q0q3) + _2bz * (q0q1 + q2q3) - my)
+                + _2bx * q1 * (_2bx * (q0q2 + q1q3) + _2bz * (0.5f - q1q1 - q2q2) - mz);
         recipNorm = invSqrt(s0 * s0 + s1 * s1 + s2 * s2 + s3 * s3); // normalise step magnitude
         s0 *= recipNorm;
         s1 *= recipNorm;
@@ -624,19 +595,19 @@ void MPU9250_Madgwick(MPU9250 *mpu)
     q2 *= recipNorm;
     q3 *= recipNorm;
 
-    mpu->q[0]=q0;
-    mpu->q[1]=q1;
-    mpu->q[2]=q2;
-    mpu->q[3]=q3;
+    mpu->q[0] = q0;
+    mpu->q[1] = q1;
+    mpu->q[2] = q2;
+    mpu->q[3] = q3;
 
-    yaw   = atan2(2.0f * (q1 * q2 + q0 * q3), q0 * q0 + q1 * q1 - q2 * q2 - q3 * q3);
+    yaw = atan2(2.0f * (q1 * q2 + q0 * q3), q0 * q0 + q1 * q1 - q2 * q2 - q3 * q3);
     pitch = -asin(2.0f * (q1 * q3 - q0 * q2));
-    roll  = atan2(2.0f * (q0 * q1 + q2 * q3), q0 * q0 - q1 * q1 - q2 * q2 + q3 * q3);
+    roll = atan2(2.0f * (q0 * q1 + q2 * q3), q0 * q0 - q1 * q1 - q2 * q2 + q3 * q3);
     pitch *= 180.0f / PI;
-    yaw   *= 180.0f / PI;
+    yaw *= 180.0f / PI;
 //    yaw   -= 13.8f; // Declination at Danville, California is 13 degrees 48 minutes and 47 seconds on 2014-04-04
-    roll  *= 180.0f / PI;
-    mpu->roll =roll;
+    roll *= 180.0f / PI;
+    mpu->roll = roll;
     mpu->pitch = pitch;
     mpu->yaw = yaw;
 }
@@ -644,12 +615,203 @@ void MPU9250_Madgwick(MPU9250 *mpu)
 /**/
 void i2cWrite(I2C_HandleTypeDef *hi2c, uint16_t address, uint16_t reg, uint8_t *data, uint8_t data_length)
 {
- HAL_I2C_Mem_Write(hi2c, address, reg, I2C_MEMADD_SIZE_8BIT, data, data_length, 1000);
-
+    HAL_I2C_Mem_Write(hi2c, address, reg, I2C_MEMADD_SIZE_8BIT, data, data_length, 1000);
 }
 
 void i2cRead(I2C_HandleTypeDef *hi2c, uint16_t address, uint16_t reg, uint8_t *data, uint8_t data_length)
 {
-     HAL_I2C_Mem_Read(hi2c, address, reg, I2C_MEMADD_SIZE_8BIT, data, data_length, 1000);
+    HAL_I2C_Mem_Read(hi2c, address, reg, I2C_MEMADD_SIZE_8BIT, data, data_length, 1000);
 
+}
+
+//void Myfilter9DOF(float wx, float wy, float wz,
+//                  float ax, float ay, float az,
+//                                    float magx, float magy, float magz)
+
+void Myfilter9DOF(MPU9250* mpu)
+{
+    //static float q0 = 1, q1 = 0, q2 = 0, q3 = 0;
+
+
+    float ax = mpu->AccX;
+    float ay = mpu->AccY;
+    float az = mpu->AccZ;
+    float wx = mpu->GyroX * PI / 180.0f;
+    float wy = mpu->GyroY * PI / 180.0f;
+    float wz = mpu->GyroZ * PI / 180.0f;
+    float magx = mpu->MagX;
+    float magy = mpu->MagY;
+    float magz = mpu->MagZ;
+
+
+    static float q0_last = 1;
+    static float q1_last = 0;
+    static float q2_last = 0;
+    static float q3_last = 0;
+
+/*    static float x_ang_last = 0;
+    static float y_ang_last = 0;
+    static float z_ang_last = 0;*/
+
+    //static bool update_first_time_flag = true;
+
+    float q0_dot = 0, q1_dot = 0, q2_dot = 0, q3_dot = 0, norm = 0;
+    float alphaAccSf = 0, accnorm = 0, magnorm = 0;
+        //float e_m = 0, sf = 0;//filter efficient, magnitude error, scale factor, acc norm
+    float gx = 0, gy = 0, gz = 0; //predicted gravity
+    float mx = 0, my = 0; //predicted gravity
+    float To = 0;
+    float del_q0 = 0, del_q1 = 0, del_q2 = 0, del_q3 = 0, delnorm = 0;//delta quaternions
+    float r0 = 0, r1 = 0, r2 = 0, r3 = 0; //Temp multiply
+    float xAccelerationValue = 0, yAccelerationValue = 0, zAccelerationValue = 0;
+    float xMagValue = 0, yMagValue = 0, zMagValue = 0;
+    float xAngleEstValue = 0, yAngleEstValue = 0, zAngleEstValue = 0;
+//    float xAngleVelValue = 0, yAngleVelValue = 0, zAngleVelValue = 0;
+
+    /*prediction*/
+
+    q0_dot = wx * q1 + wy * q2 + wz * q3;
+    q1_dot = - wx * q0 + wz * q2 - wy * q3;
+    q2_dot = - wy * q0 - wz * q1 + wx * q3;
+    q3_dot = - wz * q0 + wy * q1 - wx * q2;
+
+    q0 = q0 + q0_dot * 0.5f /sampleFreq;
+    q1 = q1 + q1_dot * 0.5f /sampleFreq;
+    q2 = q2 + q2_dot * 0.5f /sampleFreq;
+    q3 = q3 + q3_dot * 0.5f /sampleFreq;
+
+    norm = sqrt(q0 * q0 + q1 * q1 + q2 * q2 + q3 * q3) ;
+
+    q0 = q0 / norm;
+    q1 = q1 / norm;
+    q2 = q2 / norm;
+    q3 = q3 / norm;
+
+    /*accCorection*/
+    //adaptive gain
+//    e_m = abs(sqrt(ax * ax + ay * ay + az * az) - 0.95) / 0.95;
+//
+//    if(e_m<0.1)
+//        sf=1;
+//    else if(e_m<0.2)
+//        sf=1-10*(e_m-0.1);
+//    else
+//        sf=0;
+//
+//    alphaAccSf = alphaAcc * sf;
+
+    alphaAccSf = alphaAcc;
+
+    //normalize acc
+    accnorm = sqrt(ax * ax + ay * ay + az * az);
+    xAccelerationValue = ax / accnorm;
+    yAccelerationValue = ay / accnorm;
+    zAccelerationValue = az / accnorm;
+
+    //Predicted Gravity
+    gx = (q0 * q0 + q1 * q1 - q2 * q2 - q3 * q3) * xAccelerationValue + 2 * (q1 * q2 + q0 * q3) * yAccelerationValue + 2 * (q1 * q3 - q0 * q2) * zAccelerationValue;
+    gy = 2 * (q1 * q2 - q0 * q3) * xAccelerationValue + (q0 * q0 - q1 * q1 + q2 * q2 - q3 * q3) * yAccelerationValue + 2 * (q2 * q3 + q1 * q0) * zAccelerationValue;
+    gz = 2 * (q1 * q3 + q0 * q2) * xAccelerationValue + 2 * (q2 * q3 - q1 * q0) * yAccelerationValue + (q0 * q0 - q1 * q1 - q2 * q2 + q3 * q3) * zAccelerationValue;
+
+    //delta quaternions
+    del_q0 = sqrt((gz + 1) / 2);
+    del_q1 = - gy / sqrt(2 * (gz + 1));
+    del_q2 = gx / sqrt(2 * (gz + 1));
+    del_q3 = 0;
+
+    //interpolation
+    del_q0 = (1 - alphaAccSf) * 1 + alphaAccSf * del_q0;
+    del_q1 = alphaAccSf * del_q1;
+    del_q2 = alphaAccSf * del_q2;
+
+    //normalize delta
+    delnorm = sqrt(del_q0 * del_q0 + del_q1 * del_q1 + del_q2 * del_q2 + del_q3 * del_q3);
+    del_q0 = del_q0 / delnorm;
+    del_q1 = del_q1 / delnorm;
+    del_q2 = del_q2 / delnorm;
+    del_q3 = del_q3 / delnorm;
+
+    //correction (multiply)
+    r0 = q0 * del_q0 - q1 * del_q1 - q2 * del_q2 - q3 * del_q3;
+    r1 = q0 * del_q1 + q1 * del_q0 + q2 * del_q3 - q3 * del_q2;
+    r2 = q0 * del_q2 - q1 * del_q3 + q2 * del_q0 + q3 * del_q1;
+    r3 = q0 * del_q3 + q1 * del_q2 - q2 * del_q1 + q3 * del_q0;
+
+    //update
+    q0=r0;
+    q1=r1;
+    q2=r2;
+    q3=r3;
+
+    /*Magnetic Correction*/
+    //normalize Mag
+    magnorm = sqrt(magx * magx + magy * magy + magz * magz);
+    xMagValue = magx / magnorm;
+    yMagValue = magy / magnorm;
+    zMagValue = magz / magnorm;
+
+    //Predicted Gravity
+    mx = (q0 * q0 + q1 * q1 - q2 * q2 - q3 * q3) * xMagValue + 2 *(q1 * q2 + q0 * q3) * yMagValue + 2 * (q1 * q3 - q0 * q2) * zMagValue;
+    my = 2 *(q1 * q2 - q0 * q3) * xMagValue + (q0 * q0 - q1 * q1 + q2 * q2 - q3 * q3) * yMagValue + 2 * (q2 * q3 + q1 * q0) * zMagValue;
+//    mz = 2 *(q1 * q3 + q0 * q2) * xMagValue + 2 * (q2 * q3 - q1 * q0) * yMagValue + (q0 * q0 - q1 * q1 - q2 * q2 + q3 * q3) * zMagValue;
+
+    To = sqrt(xMagValue * xMagValue + yMagValue * yMagValue);
+
+    //delta quaternions
+    del_q0 = sqrt((To + mx * sqrt(To)) / (2 * To));
+    del_q1 = 0;
+    del_q2 = 0;
+    del_q3 = my / (sqrt(2 * (To + mx * sqrt(To))));
+
+    //interpolation
+    del_q0 = (1 - alphaMag) * 1 + alphaMag * del_q0;
+    del_q1 = 0;
+    del_q2 = 0;
+    del_q3 = alphaMag * del_q3;
+
+    //normalize delta
+    delnorm = sqrt(del_q0 * del_q0 + del_q1 * del_q1 + del_q2 * del_q2 + del_q3 * del_q3);
+    del_q0 = del_q0 / delnorm;
+    del_q1 = del_q1 / delnorm;
+    del_q2 = del_q2 / delnorm;
+    del_q3 = del_q3 / delnorm;
+
+    //correction (multiply)
+    r0 = q0 * del_q0 - q1 * del_q1 - q2 * del_q2 - q3 * del_q3;
+    r1 = q0 * del_q1 + q1 * del_q0 + q2 * del_q3 - q3 * del_q2;
+    r2 = q0 * del_q2 - q1 * del_q3 + q2 * del_q0 + q3 * del_q1;
+    r3 = q0 * del_q3 + q1 * del_q2 - q2 * del_q1 + q3 * del_q0;
+
+    //update
+    q0=r0;
+    q1=r1;
+    q2=r2;
+    q3=r3;
+        norm = sqrt(q0*q0 + q1*q1 + q2*q2 + q3*q3);
+    if (norm < 0.95f || norm > 1.05f)
+    {
+        q0 = q0_last;
+        q1 = q1_last;
+        q2 = q2_last;
+        q3 = q3_last ;
+
+    }
+
+    /*update last values */
+    q0_last = q0;
+    q1_last = q1;
+    q2_last = q2;
+    q3_last = q3;
+    /*Quatenions to Euler angle*/
+
+    xAngleEstValue = atan2f((2 * ( - q0 * q1 + q2 * q3)),(1 - 2 * (q1 * q1 + q2 * q2))) * 57.29564f;
+    yAngleEstValue = asinf(2 * ( - q0 * q2 - q3 * q1)) * 57.29564f;
+    zAngleEstValue = atan2f((2 * ( - q0 * q3 + q1 * q2)),(1 - 2 * (q2 * q2 + q3 * q3))) * 57.29564f;
+        RPY[0] = xAngleEstValue;
+        RPY[1] = yAngleEstValue;
+        RPY[2] = zAngleEstValue;
+
+        mpu->roll = xAngleEstValue;
+        mpu->pitch = yAngleEstValue;
+        mpu->yaw = zAngleEstValue;
 }

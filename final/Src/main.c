@@ -82,7 +82,8 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 
     if (htim->Instance == htim10.Instance)
     {
-        MPU9250_read(&hi2c1, &mpu2);
+       dutyb=dutya;
+       dutya=0;
 
         //bgc_bldchdl(&bldc1, out);
         //bgc_SVPWM(&bldc1 , 200);
@@ -166,7 +167,7 @@ int main(void)
 //    __HAL_TIM_SET_COMPARE(&htim3, TIM_CHANNEL_2, 0);
 //    __HAL_TIM_SET_COMPARE(&htim3, TIM_CHANNEL_3, 0);
     MPU9250_Init(&hi2c1, &mpu2, AFS_4G, GFS_250DPS, MFS_16BITS);
-
+    dutya=0;
     /**/
     HAL_TIM_Base_Start_IT(&htim10);
 //    MPU6050_Init(&hi2c1,&mpu,Acc_2G,Gyro_500s);
@@ -183,7 +184,8 @@ int main(void)
         HAL_GPIO_TogglePin(GPIOD, GPIO_PIN_13);
         HAL_GPIO_TogglePin(GPIOD, GPIO_PIN_14);
         HAL_GPIO_TogglePin(GPIOD, GPIO_PIN_15);
-        HAL_Delay(1000);
+        MPU9250_read(&hi2c1, &mpu2);
+        dutya++;
         /* USER CODE BEGIN 3 */
     }
     /* USER CODE END 3 */

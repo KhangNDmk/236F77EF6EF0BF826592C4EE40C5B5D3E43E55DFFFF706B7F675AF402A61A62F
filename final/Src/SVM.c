@@ -30,15 +30,17 @@ float bgc_sin(int deg)
 }
 
 /* Calculate cosin's value from sine_table */
-float bgc_cos(int deg)
+/* return cos(deg)*/
+float bgc_cos(int deg) 
 {
     if (deg < 91) return sine_table[90-deg];
     else if (deg < 181) return (- sine_table[deg-90]);
     else if (deg < 271) return (- sine_table[270-deg]);
-    else return sine_table[deg-270];
+    else return sine_table[deg-270]; 
 }
+/* end bgc_cos*/
 
-/**/
+/* */
 void bgc_bldchdl(volatile BLDC *bldc0, float w0)
 {
     bldc0->w = w0;
@@ -56,9 +58,9 @@ void bgc_bldchdl(volatile BLDC *bldc0, float w0)
     bldc0->Vb = V* bgc_sin(deg0);
 }
 
-/*  * Generate bldc0 duty cycle 
-    * 
-*/
+/* Generate bldc0 duty cycle */
+/* CTR : max counter value of PWM chanel */
+/* BLDC : used motor */
 void bgc_SVPWM(volatile BLDC *bldc0, int CTR)
 {
     float Va = bldc0->Va;
