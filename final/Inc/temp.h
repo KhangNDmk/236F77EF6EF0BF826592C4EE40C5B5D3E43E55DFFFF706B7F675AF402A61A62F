@@ -21,4 +21,5 @@ extern "C" {
 
 #ifdef __cplusplus
 }
+#endif
 #endif /* TEMP_H_ */

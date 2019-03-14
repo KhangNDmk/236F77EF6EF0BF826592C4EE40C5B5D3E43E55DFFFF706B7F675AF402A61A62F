@@ -54,6 +54,13 @@ void bldc2_init()
     bldc2.Kf = 0.1;
 }
 /**/
+int cal_error(int ref, int fb)
+{
+    int ee=ref-fb;
+    if(ee>600)      ee-=1200;
+    if(ee<-600)     ee+=1200;
+    return ee;
+}
 
 /**/
 void bldc_init()

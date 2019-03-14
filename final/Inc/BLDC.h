@@ -46,7 +46,7 @@ typedef struct
 /**/
 
 /**/
-
+int cal_error(int ref, int fb);
 /**/
 
 /**/

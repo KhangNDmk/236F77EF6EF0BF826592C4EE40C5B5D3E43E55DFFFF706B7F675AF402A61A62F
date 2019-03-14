@@ -7,6 +7,7 @@
 
 #include "MPU9250.h"
 
+float avg_rad;
 /**/
 //int flag = 1;
 //HAL_StatusTypeDef status; // flag to check transaction complete
@@ -89,13 +90,70 @@ void MPU9250_readMag(I2C_HandleTypeDef *hi2c, MPU9250 *mpu)
         }
     }
 
-    mpu->MagX = (float) mpu->MagX_raw * mpu->Mag_factor * mpu->MagCalibX - mpu->MagX_offset;
-    mpu->MagY = (float) mpu->MagY_raw * mpu->Mag_factor * mpu->MagCalibY - mpu->MagY_offset;
-    mpu->MagZ = (float) mpu->MagZ_raw * mpu->Mag_factor * mpu->MagCalibZ - mpu->MagZ_offset;
+        if(mpu->calib_done==1)
+        {
+        	mpu->MagX = (float) mpu->MagX_raw * mpu->Mag_factor * mpu->MagCalibX * mpu->MagX_calibscale - mpu->MagX_offset;
+        	mpu->MagY = (float) mpu->MagY_raw * mpu->Mag_factor * mpu->MagCalibY * mpu->MagY_calibscale - mpu->MagY_offset;
+        	mpu->MagZ = (float) mpu->MagZ_raw * mpu->Mag_factor * mpu->MagCalibZ * mpu->MagZ_calibscale - mpu->MagZ_offset;
+        }
+        else
+        {
+        	mpu->MagX = (float) mpu->MagX_raw * mpu->Mag_factor * mpu->MagCalibX;
+        	mpu->MagY = (float) mpu->MagY_raw * mpu->Mag_factor * mpu->MagCalibY;
+        	mpu->MagZ = (float) mpu->MagZ_raw * mpu->Mag_factor * mpu->MagCalibZ;
+        }
+
 
 }
 /*end MPU9250_readMag*/
 
+void Magnet_Calib(I2C_HandleTypeDef *hi2c, MPU9250*mpu)
+{
+	uint16_t i = 0, sample_count = 500;
+	int32_t mag_bias[3] = {0,0,0};
+	int32_t mag_scale[3] = {0,0,0};
+	int32_t mag_max[3] = {-32767, -32767, -32767};
+	int32_t mag_min[3] = {32767, 32767, 32767};
+	//HAL_Delay(4000);
+	for(i = 0; i<sample_count; i++)
+	{
+		MPU9250_readMag(hi2c, mpu);
+		if(mpu->MagX_raw>mag_max[0])
+			mag_max[0] = mpu->MagX_raw;
+		if(mpu->MagY_raw>mag_max[1])
+			mag_max[1] = mpu->MagY_raw;
+		if(mpu->MagZ_raw>mag_max[2])
+			mag_max[2] = mpu->MagZ_raw;
+
+
+
+
+		if(mpu->MagX_raw<mag_min[0])
+			mag_min[0] = mpu->MagX_raw;
+		if(mpu->MagY_raw<mag_min[1])
+			mag_min[1] = mpu->MagY_raw;
+		if(mpu->MagZ_raw<mag_min[2])
+			mag_min[2] = mpu->MagZ_raw;
+		HAL_Delay(12);
+	}
+	mag_bias[0] = (mag_max[0] + mag_min[0])/2;
+	mag_bias[1] = (mag_max[1] + mag_min[1])/2;
+	mag_bias[2] = (mag_max[2] + mag_min[2])/2;
+	mpu->MagX_offset = mag_bias[0] * mpu->Mag_factor * mpu->MagCalibX;
+	mpu->MagY_offset = mag_bias[1] * mpu->Mag_factor * mpu->MagCalibY;
+	mpu->MagZ_offset = mag_bias[2] * mpu->Mag_factor * mpu->MagCalibZ;
+
+	mag_scale[0]  = (mag_max[0] - mag_min[0])/2;
+	mag_scale[1]  = (mag_max[1] - mag_min[1])/2;
+	mag_scale[2]  = (mag_max[2] - mag_min[2])/2;
+	avg_rad = mag_scale[0]+mag_scale[1]+mag_scale[2];
+	avg_rad/=3.0;
+	mpu->MagX_calibscale = avg_rad/((float)mag_scale[0]);
+	mpu->MagY_calibscale = avg_rad/((float)mag_scale[1]);
+	mpu->MagZ_calibscale = avg_rad/((float)mag_scale[2]);
+	mpu->calib_done = 1;
+
+}
 /*begin MPU9250_calib*/
 void MPU9250_calib(I2C_HandleTypeDef *hi2c, MPU9250 *mpu)
 {
@@ -312,11 +370,11 @@ void MPU9250_Init8963(I2C_HandleTypeDef *hi2c, MPU9250 *mpu)
     temp = (mpu->mscale << 4) | 0x06;
     i2cWrite(hi2c, AK8963_ADDRESS, AK8963_CNTL, &temp, 1);
     HAL_Delay(10);
-
+    Magnet_Calib(hi2c,mpu);
     /**/
-    mpu->MagX_offset = +470.; // User environmental x-axis correction in milliGauss, should be automatically calculated
-    mpu->MagY_offset = +120.;  // User environmental x-axis correction in milliGauss
-    mpu->MagZ_offset = +125.;  // User environmental x-axis correction in milliGauss
+//    mpu->MagX_offset = +470.; // User environmental x-axis correction in milliGauss, should be automatically calculated
+//    mpu->MagY_offset = +120.;  // User environmental x-axis correction in milliGauss
+//    mpu->MagZ_offset = +125.;  // User environmental x-axis correction in milliGauss
 }
 /*end MPU9250_Init8963*/
 
@@ -324,6 +382,7 @@ void MPU9250_Init8963(I2C_HandleTypeDef *hi2c, MPU9250 *mpu)
 void MPU9250_Init(I2C_HandleTypeDef *hi2c, MPU9250 *mpu, Ascale Ascale0, Gscale Gscale0, Mscale Mscale0)
 {
     // Store user setting
+	mpu->calib_done = 0;
     mpu->ascale = Ascale0;
     mpu->gscale = Gscale0;
     mpu->mscale = Mscale0;
@@ -373,7 +432,7 @@ void MPU9250_SetParam(I2C_HandleTypeDef *hi2c, MPU9250 *mpu)
     i2cWrite(hi2c, MPU9250_ADDRESS, CONFIG, &temp, 1);
 
     // Set sample rate = gyroscope output rate/(1 + SMPLRT_DIV)
-    temp = 0x04;    // Use a 200 Hz rate; the same rate set in CONFIG above
+    temp = 0x01;    // Use a 500 Hz rate; the same rate set in CONFIG above
     i2cWrite(hi2c, MPU9250_ADDRESS, SMPLRT_DIV, &temp, 1);
 
     // config gyroscope

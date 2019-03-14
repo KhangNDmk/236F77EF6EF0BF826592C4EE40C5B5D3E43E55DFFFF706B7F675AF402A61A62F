@@ -20,6 +20,7 @@ static const float sine_table[91]={0,0.0175,0.0349,0.0523,0.0698,0.0872,0.1045,0
 
 /**/
 
+
 /* Calculate sin's value from sine_table*/
 float bgc_sin(int deg)
 {
@@ -28,6 +29,8 @@ float bgc_sin(int deg)
     else if (deg < 271) return (- sine_table[deg-180]);
     else return ( - sine_table[360-deg]) ;
 }
+/* end bgc_sin*/
+
 
 /* Calculate cosin's value from sine_table */
 /* return cos(deg)*/
@@ -39,6 +42,7 @@ float bgc_cos(int deg)
     else return sine_table[deg-270]; 
 }
 /* end bgc_cos*/
+
 
 /* */
 void bgc_bldchdl(volatile BLDC *bldc0, float w0)

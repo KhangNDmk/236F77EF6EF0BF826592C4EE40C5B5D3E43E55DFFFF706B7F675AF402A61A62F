@@ -1,8 +1,9 @@
 BLDC.c:17:6:pid_init	0	static
 BLDC.c:30:7:pid_controller	0	static
 BLDC.c:46:6:bldc2_init	0	static
-BLDC.c:59:6:bldc_init	0	static
-BLDC.c:70:5:bldc_stop	8	static
-BLDC.c:121:5:bldc_start	8	static
-BLDC.c:167:5:bldc_alaign	0	static
-BLDC.c:198:6:test_bldc	0	static
+BLDC.c:57:5:cal_error	0	static
+BLDC.c:66:6:bldc_init	0	static
+BLDC.c:77:5:bldc_stop	8	static
+BLDC.c:128:5:bldc_start	8	static
+BLDC.c:174:5:bldc_alaign	0	static
+BLDC.c:205:6:test_bldc	0	static

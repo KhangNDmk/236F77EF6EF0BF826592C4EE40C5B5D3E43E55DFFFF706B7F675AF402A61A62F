@@ -25,7 +25,8 @@ double e_m,sf;//filter efficient, magnitude error, scale factor, acc norm
 #define alphaAcc 0.004f
 #define alphaMag 0.0004f
 #define alphaDef  0.01f
-volatile float alpha = alphaDef;
+//volatile float alpha = alphaDef;
+
 /**/
 //Magnetometer Registers
 #define AK8963_ADDRESS   0x0C<<1
@@ -197,7 +198,6 @@ float aRes, gRes, mRes;      // scale resolutions per LSB for the sensors
 /**/
 typedef struct
 {
-
     uint8_t ascale;
     uint8_t gscale;
     uint8_t mscale;
@@ -213,12 +213,14 @@ typedef struct
 
     int16_t MagX_raw, MagY_raw, MagZ_raw;
     float MagCalibX, MagCalibY, MagCalibZ;
+    float MagX_calibscale, MagY_calibscale, MagZ_calibscale;
     float MagX, MagY, MagZ;
     float MagX_offset, MagY_offset, MagZ_offset;
 
     float q[4];
     float roll, pitch, yaw;
     float temperature;
+    int calib_done;
 } MPU9250;
 
 /**/
@@ -235,7 +237,7 @@ void MPU9250_SetParam(I2C_HandleTypeDef *hi2c, MPU9250 *mpu);
 void MPU9250_readAcc(I2C_HandleTypeDef *hi2c, MPU9250 *mpu);
 void MPU9250_readMag(I2C_HandleTypeDef *hi2c, MPU9250 *mpu);
 void MPU9250_readGyro(I2C_HandleTypeDef *hi2c, MPU9250 *mpu);
-
+void Magnet_Calib(I2C_HandleTypeDef *hi2c, MPU9250*mpu);
 void MPU9250_Madgwick(MPU9250 *mpu);
 void MPU9250_read(I2C_HandleTypeDef *hi2c, MPU9250 *mpu);
 void Myfilter9DOF(MPU9250* mpu);

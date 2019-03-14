@@ -36,6 +36,7 @@
  ******************************************************************************
  */
 /* Includes ------------------------------------------------------------------*/
+#include <BGC.h>
 #include "main.h"
 #include "stm32f4xx_hal.h"
 #include "adc.h"
@@ -59,13 +60,16 @@
 /* USER CODE BEGIN PV */
 /* Private variables ---------------------------------------------------------*/
 
-MPU9250 mpu2;
+ MPU9250 mpu2;
 
 
 //volatile BLDC bldc1;
 float dutya, dutyb, dutyc;
-int deg0 = 0;
-float out, out2;
+double deg0 = 0;
+
+double count, out, out1,out2, phi_ref;
+PID_OBJ pid1;
+double Kp, Ki, err, Vout=0;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -82,25 +86,32 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 
     if (htim->Instance == htim10.Instance)
     {
-       dutyb=dutya;
-       dutya=0;
+        dutya+=1;
+//        err = phi_ref - TIM2->CNT;
+        MPU9250_read(&hi2c1, &mpu2);
+        phi_ref=mpu2.pitch*3.333333;
+        out=TIM2->CNT;
+        deg0=out*0.3;
+        err=cal_error(phi_ref, out);
 
-        //bgc_bldchdl(&bldc1, out);
-        //bgc_SVPWM(&bldc1 , 200);
+        deg0=out*0.3;
+                Vout = pid_controller(&pid1, err);
+                if (Vout < 0)
+                {
+                    __HAL_TIM_SET_COMPARE(&htim3, TIM_CHANNEL_2, 0);
+                    __HAL_TIM_SET_COMPARE(&htim3, TIM_CHANNEL_3, -Vout);
+                }
+                else
+                {
+                    __HAL_TIM_SET_COMPARE(&htim3, TIM_CHANNEL_2, Vout);
+                    __HAL_TIM_SET_COMPARE(&htim3, TIM_CHANNEL_3, 0);
 
-        //MPU6050_filter_Init(&filter1);
-//        MPU6050_ReadData(&hi2c1,&mpu);
-//        MPU6050_filter (&mpu, &filter1 , &rpy1 , 2.5f , 100.0f);
+                }
 
-        //MadgwickAHRSupdateIMU( mpu.GyroX, mpu.GyroY,mpu.GyroZ, mpu.AccX,mpu.AccY,mpu.AccZ);
-        //qua2Euler();
 
-//        dutya=(dutya*31+rpy1.R)/32;
-//        dutyb=(31*dutyb+rpy1.P)/32;
-//        dutyc=(31*dutyc+rpy1.Y)/32;
-        //__HAL_TIM_SET_COMPARE(&htim3, TIM_CHANNEL_1, dutya);
-        //__HAL_TIM_SET_COMPARE(&htim3, TIM_CHANNEL_2, dutyb);
-        //__HAL_TIM_SET_COMPARE(&htim3, TIM_CHANNEL_3, dutyc);
+
+
+
         /**/
     }
 }
@@ -136,10 +147,11 @@ int main(void)
     /* Initialize all configured peripherals */
     MX_GPIO_Init();
     MX_DMA_Init();
-    MX_ADC1_Init();
+//    MX_ADC1_Init();
     MX_I2C1_Init();
     MX_I2C2_Init();
     MX_TIM1_Init();
+    MX_TIM2_Init();
     MX_TIM3_Init();
     MX_TIM4_Init();
     MX_USART3_Init();
@@ -148,26 +160,26 @@ int main(void)
     /* USER CODE BEGIN 2 */
 
     //bldc_init(&bldc1, 0.36 ,20 ,VDC, 3 , 0.1);     //0.2857 ...0.32..0.07
-    HAL_Delay(1000);
-//    MPU6050_filter_Init(&filter1);
+    HAL_Delay(100);
 
-//    HAL_GPIO_WritePin(GPIOD, GPIO_PIN_1, GPIO_PIN_SET);
-//    HAL_GPIO_WritePin(GPIOD, GPIO_PIN_3, GPIO_PIN_SET);
-//    HAL_GPIO_WritePin(GPIOD, GPIO_PIN_5, GPIO_PIN_SET);
-//
-//    HAL_TIM_PWM_Start(&htim4, TIM_CHANNEL_1);
-//
-//    HAL_TIM_PWM_Start(&htim3, TIM_CHANNEL_1);
-//    HAL_TIM_PWM_Start(&htim3, TIM_CHANNEL_2);
-//    HAL_TIM_PWM_Start(&htim3, TIM_CHANNEL_3);
-//
-//    __HAL_TIM_SET_COMPARE(&htim4, TIM_CHANNEL_1, 400);
-//
-//    __HAL_TIM_SET_COMPARE(&htim3, TIM_CHANNEL_1, 150);
-//    __HAL_TIM_SET_COMPARE(&htim3, TIM_CHANNEL_2, 0);
-//    __HAL_TIM_SET_COMPARE(&htim3, TIM_CHANNEL_3, 0);
+
+
+
+
     MPU9250_Init(&hi2c1, &mpu2, AFS_4G, GFS_250DPS, MFS_16BITS);
     dutya=0;
+    HAL_TIM_Encoder_Start(&htim2, TIM_CHANNEL_1 | TIM_CHANNEL_2);
+
+    phi_ref = 0;
+//    phi_ref = 600;
+    pid_init(&pid1, 3, 0.1, 0);
+
+    HAL_GPIO_WritePin(GPIOD, GPIO_PIN_1, GPIO_PIN_SET);
+    HAL_GPIO_WritePin(GPIOD, GPIO_PIN_3, GPIO_PIN_SET);
+    HAL_GPIO_WritePin(GPIOD, GPIO_PIN_5, GPIO_PIN_SET);
+    HAL_TIM_PWM_Start(&htim3, TIM_CHANNEL_1);
+    HAL_TIM_PWM_Start(&htim3, TIM_CHANNEL_2);
+    HAL_TIM_PWM_Start(&htim3, TIM_CHANNEL_3);
     /**/
     HAL_TIM_Base_Start_IT(&htim10);
 //    MPU6050_Init(&hi2c1,&mpu,Acc_2G,Gyro_500s);
@@ -180,12 +192,15 @@ int main(void)
     {
 
         /* USER CODE END WHILE */
-        HAL_GPIO_TogglePin(GPIOD, GPIO_PIN_12);
-        HAL_GPIO_TogglePin(GPIOD, GPIO_PIN_13);
-        HAL_GPIO_TogglePin(GPIOD, GPIO_PIN_14);
-        HAL_GPIO_TogglePin(GPIOD, GPIO_PIN_15);
-        MPU9250_read(&hi2c1, &mpu2);
-        dutya++;
+
+//phi_ref=600;
+//HAL_Delay(3000);
+//phi_ref=900;
+//HAL_Delay(3000);
+
+
+//        MPU9250_read(&hi2c1, &mpu2);
+//        dutya++;
         /* USER CODE BEGIN 3 */
     }
     /* USER CODE END 3 */
