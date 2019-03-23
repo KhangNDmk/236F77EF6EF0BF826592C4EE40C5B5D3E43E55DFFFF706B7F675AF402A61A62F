@@ -48,7 +48,7 @@
 
 /* USER CODE BEGIN Includes */
 #include "BLDC.h"
-#include "SVM.h"
+#include "bgc_math.h"
 //#include "IMU_filter.h"
 //#include "MPU6050.h"
 #include "MPU9250.h"
@@ -62,7 +62,7 @@
 
  MPU9250 mpu2;
 
-
+mat3 Rbgc1, Rbgc2, Rbgc3;
 //volatile BLDC bldc1;
 float dutya, dutyb, dutyc;
 double deg0 = 0;
@@ -89,7 +89,8 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
         dutya+=1;
 //        err = phi_ref - TIM2->CNT;
         MPU9250_read(&hi2c1, &mpu2);
-        phi_ref=mpu2.pitch*3.333333;
+//        phi_ref=mpu2.pitch*3.333333;
+        phi_ref=0;
         out=TIM2->CNT;
         deg0=out*0.3;
         err=cal_error(phi_ref, out);
@@ -172,7 +173,7 @@ int main(void)
 
     phi_ref = 0;
 //    phi_ref = 600;
-    pid_init(&pid1, 3, 0.1, 0);
+    pid_init(&pid1, 10, 0.3, 0);
 
     HAL_GPIO_WritePin(GPIOD, GPIO_PIN_1, GPIO_PIN_SET);
     HAL_GPIO_WritePin(GPIOD, GPIO_PIN_3, GPIO_PIN_SET);

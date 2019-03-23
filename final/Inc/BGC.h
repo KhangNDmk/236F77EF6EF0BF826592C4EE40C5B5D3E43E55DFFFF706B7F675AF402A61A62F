@@ -1,5 +1,5 @@
 /*
- * BGCmode.h
+ * BGC.h
  *
  *  Created on: Feb 19, 2019
  *      Author: MK
@@ -17,12 +17,14 @@ extern "C" {
 /* Noi dung header */
 #include "BLDC.h"
 #include "MPU9250.h"
+#include "bgc_math.h"
 
 
 /* Dinh nghia cac Mode hoat dong cua BGC */
-#define BGC_MODE_PRESET         1
+#define BGC_MODE_INIT           1
 #define BGC_MODE_CALIB          2
-#define BGC_MODE_RUN            3
+#define BGC_MODE_SET            3
+#define BGC_MODE_RUN            4
 
 /* event type: Loai su kien tac dong vao he thong */
 #ifndef BGC_EVENT_TYPE
@@ -59,18 +61,28 @@ extern "C" {
 #endif
 /**/
 
-
+typedef struct quaternion
+{
+    float q[4];
+}quaternion;
 
 typedef struct
 {
-    BLDC motor1;
-    BLDC motor2;
-    BLDC motor3;
-    MPU9250 mpu1;
+//    BLDC motor1;
+//    BLDC motor2;
+//    BLDC motor3;
+//    MPU9250 mpu1;
+    float phi_M1, phi_M2, phi_M3;
+    float phi_refM1, phi_refM2, phi_refM3;
+    mat3 RM_imu, RM_gimbal, RM_imuRef;
     int mode;
+    quaternion q_m, q_r;
 }BGC;
 
 
+
+
+mat3 qua2rot(quaternion qua0 );
 
 /*Ket thuc noi dung header*/
 
