@@ -16,20 +16,20 @@ extern "C" {
 
 /**/
 typedef struct {
-    double elem[3][3];
+    float elem[3][3];
 }mat3;
 
 /**/
 void svmtest(void);
 /**/
-double bgc_sin (int deg);
+float bgc_sin (int deg);
 /**/
-double bgc_cos(int deg);
+float bgc_cos(int deg);
 /**/
 void bgc_Vab_Cal(BLDC *bldc0);
 
 /**/
-void bgc_bldchdl(volatile BLDC *bldc0, double u0);
+void bgc_bldchdl(volatile BLDC *bldc0, float u0);
 
 /**/
 void bgc_SVPWM(volatile BLDC *bldc0);
@@ -38,15 +38,15 @@ void multi_mat3(mat3* A, mat3* B, mat3* C);
 /**/
 void transpose_mat3(mat3* A, mat3* At);
 /**/
-double bgc_tsin(double x);
+float bgc_tsin(float x);
 /**/
-double bgc_fsin(double x);
+float bgc_fsin(float x);
 /**/
-double bgc_fcos(double x);
+float bgc_fcos(float x);
 /**/
-double bgc_tatan(double x);
+float bgc_tatan(float x);
 /**/
-double bgc_fatan2(double y, double x);
+float bgc_fatan2(float y, float x);
 /**/
 /**/
 #ifdef __cplusplus

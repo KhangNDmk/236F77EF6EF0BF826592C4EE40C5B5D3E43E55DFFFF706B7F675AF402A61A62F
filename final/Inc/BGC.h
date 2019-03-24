@@ -68,10 +68,6 @@ typedef struct quaternion
 
 typedef struct
 {
-//    BLDC motor1;
-//    BLDC motor2;
-//    BLDC motor3;
-//    MPU9250 mpu1;
     float phi_M1, phi_M2, phi_M3;
     float phi_refM1, phi_refM2, phi_refM3;
     mat3 RM_imu, RM_gimbal, RM_imuRef;
@@ -79,8 +75,15 @@ typedef struct
     quaternion q_m, q_r;
 }BGC;
 
+void BGC_GetQm(BGC *bgc0, MPU9250 *mpu0);
 
+mat3 BGC_CalRM_gimbal(BGC *bgc0);
 
+void BGC_SetQref(BGC *bgc0, MPU9250 *mpu0);
+
+void BGC_Controller(BGC *bgc0, MPU9250 *mpu0 , int ev_user);
+
+void BGC_init(BGC *bgc0, MPU9250 *mpu0);
 
 mat3 qua2rot(quaternion qua0 );
 

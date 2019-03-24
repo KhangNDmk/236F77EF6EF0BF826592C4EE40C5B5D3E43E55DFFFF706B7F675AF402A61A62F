@@ -8,7 +8,7 @@
 #include <bgc_math.h>
 #include "BLDC.h"
 #include "math.h"
-static const double sine_table[91]={0,0.0175,0.0349,0.0523,0.0698,0.0872,0.1045,0.1219,0.1392,0.1564,0.1736,
+static const float sine_table[91]={0,0.0175,0.0349,0.0523,0.0698,0.0872,0.1045,0.1219,0.1392,0.1564,0.1736,
                                     0.1908,0.2079,0.2250,0.2419,0.2588,0.2756,0.2924,0.3090,0.3256,0.3420,
                                     0.3584,0.3746,0.3907,0.4067,0.4226,0.4384,0.4540,0.4695,0.4848,0.5000,
                                     0.5150,0.5299,0.5446,0.5592,0.5736,0.5878,0.6018,0.6157,0.6293,0.6428,
@@ -22,7 +22,7 @@ static const double sine_table[91]={0,0.0175,0.0349,0.0523,0.0698,0.0872,0.1045,
 
 
 /* Calculate sin's value from sine_table*/
-double bgc_sin(int deg)
+float bgc_sin(int deg)
 {
     if(deg<91) return sine_table[deg];
     else if (deg <181) return sine_table[180-deg];
@@ -34,7 +34,7 @@ double bgc_sin(int deg)
 
 /* Calculate cosin's value from sine_table */
 /* return cos(deg)*/
-double bgc_cos(int deg)
+float bgc_cos(int deg)
 {
     if (deg < 91) return sine_table[90-deg];
     else if (deg < 181) return (- sine_table[deg-90]);
@@ -49,7 +49,7 @@ double bgc_cos(int deg)
 void multi_mat3(mat3* A, mat3* B, mat3* C)
 {
     int i,j,k;
-    double sum;
+    float sum;
     for(i=0;i<3;i++)                            /* la dong i cua ma tran A*/
     {
         for(j=0;j<3;j++)                        /* la cot j cua ma tran B*/
@@ -80,7 +80,7 @@ void transpose_mat3(mat3* A, mat3* At)
 /*end transpose matrix 3x3*/
 
 /*begin test fast sine algorithm for input range 0->90 deg */
-double bgc_tsin(double x)
+float bgc_tsin(float x)
 {
 #define     a0      0.707106781187
 #define     a2      -0.872348075361
@@ -90,7 +90,7 @@ double bgc_tsin(double x)
 #define     b3      0.4561589075945
 #define     b5      -0.0539104694791
 #define     deg     0.01111111111111
-    double A, B, m1, m2, m3, m4, m5, m6;
+    float A, B, m1, m2, m3, m4, m5, m6;
     m1 = deg * x - 0.5;
     m2 = m1 * m1;
     m3 = m2 * m1;
@@ -114,7 +114,7 @@ double bgc_tsin(double x)
 /*end test fast sine algorithm*/
 
 /* begin fast sine for input 0->360 deg*/
-double bgc_fsin(double x)
+float bgc_fsin(float x)
 {
     if(x>270) return -bgc_tsin(360-x);
     else if (x>180) return -bgc_tsin(x-180);
@@ -124,7 +124,7 @@ double bgc_fsin(double x)
 /* end fast sine for input 0->360 deg*/
 
 /* begin fast cosine for input 0->360 deg*/
-double bgc_fcos(double x)
+float bgc_fcos(float x)
 {
     if(x>270) return bgc_tsin(x-270);
     else if (x>180) return -bgc_tsin(270-x);
@@ -136,7 +136,7 @@ double bgc_fcos(double x)
 
 
 /* begin test atan for input 0->+oo  */
-double bgc_tatan(double x)
+float bgc_tatan(float x)
 {
 #define         a0          0.25
 #define         a1          0.63611725
@@ -144,13 +144,13 @@ double bgc_tatan(double x)
 #define         a5          1.48697
 #define         a7          -1.57588
 #define         pi          3.14159265358
-    double x1,x2, x3,x5,x7;
+    float x1,x2, x3,x5,x7;
     x1=0.5*(x-1)/(x+1);
     x2=x1*x1;
     x3=x2*x1;
     x5=x3*x2;
     x7=x5*x2;
-    double y;
+    float y;
     y = a0 + (a1*x1) + (a3*x3) + (a5*x5) + (a7*x7);
 
 #undef a0
@@ -167,7 +167,7 @@ double bgc_tatan(double x)
 
 /* begin fast atan2 for 2 inputs  -oo-> +oo */
 /* return value in range -pi -> pi */
-double bgc_fatan2(double y, double x)
+float bgc_fatan2(float y, float x)
 {
     if(x>0&&y>=0) return bgc_tatan(y/x);
     else if (x>0&&y<0) return -bgc_tatan(-y/x);
@@ -178,11 +178,11 @@ double bgc_fatan2(double y, double x)
 /* end fast atan2 for 2 inputs  -oo-> +oo */
 
 
-void bgc_bldchdl(volatile BLDC *bldc0, double w0)
+void bgc_bldchdl(volatile BLDC *bldc0, float w0)
 {
     bldc0->w = w0;
     bldc0->Vref = w0*(bldc0->Kf)+ bldc0->Voffset;
-    double V= (bldc0->Vref)/VDC;
+    float V= (bldc0->Vref)/VDC;
     V=fabs(V);
     if(V>VMAX) V=VMAX;
     /* update BLDC's angle */
@@ -201,11 +201,11 @@ void bgc_bldchdl(volatile BLDC *bldc0, double w0)
 /* BLDC : used motor */
 void bgc_SVPWM(volatile BLDC *bldc0)
 {
-    double Va = bldc0->Va;
-    double Vb = bldc0->Vb;
-    double a = fabs(Va)+0.5774*fabs(Vb);
-    double b = fabs(Va)-0.5774*fabs(Vb);
-    double c = 1.1547*fabs(Vb);
+    float Va = bldc0->Va;
+    float Vb = bldc0->Vb;
+    float a = fabs(Va)+0.5774*fabs(Vb);
+    float b = fabs(Va)-0.5774*fabs(Vb);
+    float c = 1.1547*fabs(Vb);
     int buff=0;
     int CTR=bldc0->CTR;
     if(Vb < 0) buff+=100;

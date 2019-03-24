@@ -48,6 +48,7 @@
 
 /* USER CODE BEGIN Includes */
 #include "BLDC.h"
+#include "BGC.h"
 #include "bgc_math.h"
 //#include "IMU_filter.h"
 //#include "MPU6050.h"
@@ -61,10 +62,10 @@
 /* Private variables ---------------------------------------------------------*/
 
  MPU9250 mpu2;
-
+BGC bgc1;
 mat3 Rbgc1, Rbgc2, Rbgc3;
 //volatile BLDC bldc1;
-float dutya, dutyb, dutyc;
+double dutya, dutyb, dutyc;
 double deg0 = 0;
 
 double count, out, out1,out2, phi_ref;
@@ -86,29 +87,34 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 
     if (htim->Instance == htim10.Instance)
     {
+//        MPU9250_read(&hi2c1, &mpu2);
+        BGC_Controller(&bgc1, &mpu2, 1);
+        /*test dong co mot chieu*/
         dutya+=1;
+        out=dutyb;
+
+        dutyb=0;
 //        err = phi_ref - TIM2->CNT;
-        MPU9250_read(&hi2c1, &mpu2);
+
 //        phi_ref=mpu2.pitch*3.333333;
-        phi_ref=0;
-        out=TIM2->CNT;
-        deg0=out*0.3;
-        err=cal_error(phi_ref, out);
-
-        deg0=out*0.3;
-                Vout = pid_controller(&pid1, err);
-                if (Vout < 0)
-                {
-                    __HAL_TIM_SET_COMPARE(&htim3, TIM_CHANNEL_2, 0);
-                    __HAL_TIM_SET_COMPARE(&htim3, TIM_CHANNEL_3, -Vout);
-                }
-                else
-                {
-                    __HAL_TIM_SET_COMPARE(&htim3, TIM_CHANNEL_2, Vout);
-                    __HAL_TIM_SET_COMPARE(&htim3, TIM_CHANNEL_3, 0);
-
-                }
-
+//        phi_ref=0;
+//        out=TIM2->CNT;
+//        deg0=out*0.3;
+//        err=cal_error(phi_ref, out);
+//
+//        deg0=out*0.3;
+//                Vout = pid_controller(&pid1, err);
+//                if (Vout < 0)
+//                {
+//                    __HAL_TIM_SET_COMPARE(&htim3, TIM_CHANNEL_2, 0);
+//                    __HAL_TIM_SET_COMPARE(&htim3, TIM_CHANNEL_3, -Vout);
+//                }
+//                else
+//                {
+//                    __HAL_TIM_SET_COMPARE(&htim3, TIM_CHANNEL_2, Vout);
+//                    __HAL_TIM_SET_COMPARE(&htim3, TIM_CHANNEL_3, 0);
+//                }
+/*end test dong co mot chieu*/
 
 
 
@@ -161,14 +167,17 @@ int main(void)
     /* USER CODE BEGIN 2 */
 
     //bldc_init(&bldc1, 0.36 ,20 ,VDC, 3 , 0.1);     //0.2857 ...0.32..0.07
-    HAL_Delay(100);
+//    HAL_Delay(100);
 
 
 
+    BGC_init(&bgc1, &mpu2);
 
-
-    MPU9250_Init(&hi2c1, &mpu2, AFS_4G, GFS_250DPS, MFS_16BITS);
+    // MPU9250_Init(&hi2c1, &mpu2, AFS_4G, GFS_250DPS, MFS_16BITS);
     dutya=0;
+    dutyb=0;
+
+
     HAL_TIM_Encoder_Start(&htim2, TIM_CHANNEL_1 | TIM_CHANNEL_2);
 
     phi_ref = 0;
@@ -191,17 +200,31 @@ int main(void)
     /* USER CODE BEGIN WHILE */
     while (1)
     {
+//        HAL_GPIO_WritePin(GPIOD, GPIO_PIN_1, GPIO_PIN_SET);
+//        dutyb++;
+for (float var = 0; var < 10; ++var) {
+
+//    Rbgc1.elem[2][1]=var;
+//    Rbgc2.elem[1][1]=var+5;
+//    multi_mat3( &Rbgc1, &Rbgc2, &Rbgc3 );
+//    multi_mat3( &Rbgc1, &Rbgc2, &Rbgc3 );
+//
+////        out1=sin(var);
+//    out1=bgc_fsin(var);
+//    out1=bgc_fatan2(var, var+20);
+//    out1=atan2(var, var+20);
+
+}
+//out1+=1;
+out1=( HAL_GPIO_ReadPin(GPIOE, GPIO_PIN_0)==GPIO_PIN_SET);
+//out1= HAL_GPIO_ReadPin(GPIOE, GPIO_PIN_0);
+
+
+
+;
 
         /* USER CODE END WHILE */
 
-//phi_ref=600;
-//HAL_Delay(3000);
-//phi_ref=900;
-//HAL_Delay(3000);
-
-
-//        MPU9250_read(&hi2c1, &mpu2);
-//        dutya++;
         /* USER CODE BEGIN 3 */
     }
     /* USER CODE END 3 */

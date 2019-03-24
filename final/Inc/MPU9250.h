@@ -14,6 +14,7 @@ extern "C"
 /* Noi dung header */
 #include "main.h"
 #include <math.h>
+#include "bgc_math.h"
 #include "stm32f4xx.h"
 #include "stm32f4xx_hal_i2c.h"
 //#include "MPU6050.h"
